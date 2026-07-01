@@ -137,51 +137,79 @@
   /* ---- player portal: character sheet ---- */
   .portal-topbar{display:flex;justify-content:flex-end;margin-bottom:.75rem;}
   .char-sheet-header{
-    display:flex;flex-direction:row;align-items:center;gap:1.25rem;text-align:left;
-    padding:1.5rem 1.25rem;margin-bottom:1rem;
-    background:radial-gradient(ellipse at top, rgba(217,142,63,.14), transparent 70%), var(--panel);
-    border:1px solid var(--border);border-radius:14px;
+    display:flex;flex-wrap:wrap;gap:10px;
+    margin-bottom:1rem;
   }
-  .char-sheet-left{flex-shrink:0;}
-  .char-sheet-right{flex:1;min-width:0;}
+  .sheet-box{
+    background:var(--panel);border:1px solid var(--border);border-radius:14px;
+    padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;
+  }
+  .sheet-portrait-box{flex:1 1 150px;gap:10px;}
+  .sheet-hp-box, .sheet-help-box{flex:1 1 120px;}
   .portrait-frame{
-    width:96px;height:96px;border-radius:50%;
+    width:92px;height:92px;border-radius:50%;
     border:3px solid var(--accent);
     background:var(--panel2);
     display:flex;align-items:center;justify-content:center;
-    overflow:hidden;flex-shrink:0;
+    overflow:hidden;flex-shrink:0;cursor:pointer;
     box-shadow:0 0 0 4px rgba(217,142,63,.15);
+    position:relative;
   }
-  @media(min-width:420px){.portrait-frame{width:108px;height:108px;}}
+  .portrait-frame:hover::after{
+    content:'변경';font-size:11px;color:#fff;
+    position:absolute;inset:0;background:rgba(0,0,0,.45);
+    display:flex;align-items:center;justify-content:center;
+  }
   .portrait-frame img{width:100%;height:100%;object-fit:cover;}
-  .portrait-placeholder{font-family:'Cinzel',serif;font-size:34px;color:var(--accent);}
-  .char-sheet-name{font-size:21px;color:var(--accent);margin-bottom:.7rem;}
-  .hp-bar-wrap{width:100%;margin-bottom:.65rem;}
-  .hp-bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);margin-bottom:4px;}
-  .hp-bar-outer{height:12px;background:var(--bg);border-radius:8px;overflow:hidden;border:1px solid var(--border);}
-  .hp-bar-inner{height:100%;background:linear-gradient(90deg,#8a3f3f,#e2564f);width:100%;transition:width .3s;}
-  .help-request-display{font-size:12px;color:var(--text-dim);display:flex;gap:8px;align-items:center;}
-  .help-dot{width:11px;height:11px;border-radius:50%;display:inline-block;border:1.5px solid var(--accent);}
+  .portrait-placeholder{font-family:'Cinzel',serif;font-size:32px;color:var(--accent);}
+  .char-sheet-name{font-size:19px;color:var(--accent);}
+  .sheet-box-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+  .hp-visual{display:flex;align-items:center;gap:10px;}
+  .hp-visual-bar{width:9px;height:52px;background:var(--bg);border-radius:5px;overflow:hidden;display:flex;align-items:flex-end;border:1px solid var(--border);}
+  .hp-visual-fill{width:100%;background:linear-gradient(180deg,#e2564f,#8a3f3f);border-radius:4px;transition:height .3s;}
+  .sheet-box-value{font-size:24px;font-weight:700;color:var(--text);font-family:'Cinzel',serif;}
+  .help-dots-row{display:flex;gap:6px;margin-bottom:6px;}
+  .help-dot{width:13px;height:13px;border-radius:50%;display:inline-block;border:1.5px solid var(--accent);}
   .help-dot.filled{background:var(--accent);}
-  .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
-  @media(min-width:420px){.stat-grid{grid-template-columns:repeat(3,1fr);}}
-  .stat-tile{
-    border:1px solid var(--border);border-top:3px solid var(--el-color);border-radius:8px;
-    padding:10px 6px;text-align:center;background:var(--panel2);
+
+  .stat-accordion-item{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;background:var(--panel2);}
+  .stat-accordion-header{
+    width:100%;background:none;border:none;border-left:4px solid var(--el-color);
+    border-radius:0;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;
+    cursor:pointer;color:var(--text);
   }
-  .stat-tile .stat-name{font-size:11px;color:var(--text-dim);margin-bottom:3px;}
-  .stat-tile .stat-value{font-size:19px;font-weight:600;color:var(--text);}
-  .stat-tile .stat-level{font-size:10px;color:var(--text-mute);margin-top:2px;}
+  .stat-accordion-header:hover{color:var(--text);border-color:var(--el-color);}
+  .stat-accordion-name{
+    font-family:'Cinzel',serif;font-weight:700;font-size:17px;letter-spacing:.02em;color:var(--el-color);
+  }
+  .stat-accordion-meta{font-size:13px;color:var(--text-dim);display:flex;align-items:center;gap:10px;}
+  .stat-accordion-chevron{transition:transform .2s;color:var(--text-mute);font-size:12px;}
+  .stat-accordion-item.open .stat-accordion-chevron{transform:rotate(180deg);}
+  .stat-accordion-body{max-height:0;overflow:hidden;transition:max-height .25s ease;padding:0 14px;}
+  .stat-accordion-item.open .stat-accordion-body{padding:2px 14px 14px;}
 
   .item-slot[draggable="true"]{cursor:grab;}
   .item-slot[draggable="true"]:active{cursor:grabbing;}
   #transfer-dropzone{
     border:2px dashed var(--border-strong);border-radius:10px;
-    padding:18px 12px;text-align:center;color:var(--text-mute);font-size:13px;
+    padding:16px 14px;min-height:64px;color:var(--text-mute);font-size:13px;
     margin-bottom:1rem;transition:background .15s,border-color .15s,color .15s;
+    display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;
   }
-  #transfer-dropzone.dropzone-hover{border-color:var(--accent);color:var(--accent);background:rgba(217,142,63,.08);}
-  #transfer-dropzone.dropzone-filled{border-style:solid;border-color:var(--accent);color:var(--text);}
+  #transfer-dropzone.dropzone-hover{border-color:var(--accent);background:rgba(217,142,63,.08);}
+  #transfer-dropzone.dropzone-filled{border-style:solid;border-color:var(--accent);justify-content:flex-start;}
+  #dropzone-placeholder{color:var(--text-mute);font-size:13px;}
+  .drop-chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--panel2);border:1px solid var(--el-color, var(--accent));border-radius:20px;
+    padding:5px 6px 5px 12px;font-size:12px;color:var(--text);
+  }
+  .drop-chip .chip-remove{
+    width:18px;height:18px;border-radius:50%;border:none;background:var(--bg);color:var(--text-dim);
+    display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;cursor:pointer;padding:0;
+  }
+  .drop-chip .chip-remove:hover{color:var(--danger);}
   .drag-ghost{position:fixed;pointer-events:none;z-index:9999;opacity:.85;}
 
   .skill-row{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);}
@@ -436,59 +464,49 @@
     </div>
 
     <div class="char-sheet-header">
-      <div class="char-sheet-left">
-        <div class="portrait-frame">
+      <div class="sheet-box sheet-portrait-box">
+        <div class="portrait-frame" id="portrait-click-area">
           <img id="pc-portrait" style="display:none;">
           <div id="pc-portrait-placeholder" class="portrait-placeholder"></div>
         </div>
-      </div>
-      <div class="char-sheet-right">
+        <input type="file" id="pc-image-input" accept="image/*" style="display:none;">
         <h1 class="char-sheet-name" id="pc-name"></h1>
-        <div class="hp-bar-wrap">
-          <div class="hp-bar-label"><span>체력</span><span id="pc-hp-text"></span></div>
-          <div class="hp-bar-outer"><div class="hp-bar-inner" id="pc-hp-bar"></div></div>
+      </div>
+      <div class="sheet-box sheet-hp-box">
+        <div class="sheet-box-label">체력</div>
+        <div class="hp-visual">
+          <div class="hp-visual-bar"><div class="hp-visual-fill" id="pc-hp-fill"></div></div>
+          <div class="sheet-box-value" id="pc-hp-text"></div>
         </div>
-        <div class="help-request-display" id="pc-help-display"></div>
+      </div>
+      <div class="sheet-box sheet-help-box">
+        <div class="sheet-box-label">구조 요청</div>
+        <div class="help-dots-row" id="pc-help-dots"></div>
+        <div class="sheet-box-value" id="pc-help-text" style="font-size:16px;"></div>
       </div>
     </div>
+    <p class="footnote" id="portrait-status" style="margin:-6px 0 1rem;"></p>
 
     <div class="panel">
-      <div class="panel-head"><h3>능력치</h3></div>
-      <div class="stat-grid" id="pc-stat-grid"></div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-head"><h3>스킬</h3></div>
-      <div id="pc-skills"></div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-head"><h3>초상화 변경</h3></div>
-      <input type="file" id="pc-image-input" accept="image/*">
-      <button class="wide" id="btn-save-portrait" style="margin-top:.65rem;">적용</button>
-      <p class="footnote" id="portrait-status"></p>
+      <div class="panel-head"><h3>능력치 &amp; 스킬</h3></div>
+      <div id="pc-stat-accordion"></div>
     </div>
 
     <div class="panel">
       <h3 style="margin-bottom:.5rem;">보유 아티팩트</h3>
-      <p class="footnote" style="margin-bottom:.6rem;">아티팩트를 아래 양도 칸으로 끌어다 놓으면 양도를 시작할 수 있어요.</p>
+      <p class="footnote" style="margin-bottom:.6rem;">아티팩트를 아래 양도 칸으로 끌어다 놓으세요. 여러 개를 한 번에 놓을 수 있어요.</p>
       <div class="item-slots" id="pc-slots"></div>
     </div>
 
     <div class="panel">
       <div class="panel-head"><h3>아티팩트 양도</h3></div>
-      <div id="transfer-dropzone">아티팩트를 여기로 끌어다 놓으세요</div>
-      <div class="form-row">
-        <div>
-          <label>양도할 아티팩트</label>
-          <select id="transfer-item-select"><option value="">아티팩트를 선택하세요</option></select>
-        </div>
-        <div>
-          <label>받을 캐릭터</label>
-          <select id="transfer-target-select"><option value="">캐릭터를 선택하세요</option></select>
-        </div>
-        <button class="primary wide" id="btn-transfer">양도하기</button>
+      <div id="transfer-dropzone">
+        <span id="dropzone-placeholder">아티팩트를 여기로 끌어다 놓으세요</span>
       </div>
+      <label>받을 캐릭터 이름</label>
+      <input type="text" id="transfer-target-input" list="transfer-target-list" placeholder="캐릭터 이름을 입력하세요">
+      <datalist id="transfer-target-list"></datalist>
+      <button class="primary wide" id="btn-transfer" style="margin-top:.85rem;">양도하기</button>
       <p class="footnote" id="transfer-status"></p>
     </div>
   </div>
@@ -1728,6 +1746,8 @@ const db = getFirestore(firebaseApp);
 
   let pendingPortraitDataUrl = null;
   let dragState = null;
+  let stagedTransferItemIds = [];
+  let openAccordionKey = null;
 
   function renderPortalChar(){
     const p = currentPortalPlayer();
@@ -1750,38 +1770,48 @@ const db = getFirestore(firebaseApp);
     const maxHp = maxHpOf(p);
     const curHp = Math.max(0, Math.min(maxHp, currentHpOf(p)));
     $('pc-hp-text').textContent = curHp+' / '+maxHp;
-    $('pc-hp-bar').style.width = (maxHp>0 ? (curHp/maxHp*100) : 0)+'%';
+    $('pc-hp-fill').style.height = (maxHp>0 ? (curHp/maxHp*100) : 0)+'%';
 
     const helpLeft = helpRequestsOf(p);
     const dots = [];
     for(let i=0;i<2;i++){
       dots.push('<span class="help-dot'+(i<helpLeft?' filled':'')+'"></span>');
     }
-    $('pc-help-display').innerHTML = '<span>구조 요청</span>' + dots.join('') + '<span>'+helpLeft+' / 2</span>';
+    $('pc-help-dots').innerHTML = dots.join('');
+    $('pc-help-text').textContent = helpLeft+' / 2';
 
-    $('pc-stat-grid').innerHTML = ELEMENTS.map(function(el){
+    $('pc-stat-accordion').innerHTML = ELEMENTS.map(function(el){
       const stat = computeStat(p, el.key);
       const lvl = levelOf(p, el.key);
-      return '<div class="stat-tile" style="--el-color:'+el.color+'">' +
-        '<div class="stat-name">'+el.name+'</div>' +
-        '<div class="stat-value">'+stat+'</div>' +
-        '<div class="stat-level">Lv.'+lvl+'</div>' +
-        '</div>';
-    }).join('');
-
-    let skillsHtml = '';
-    ELEMENTS.forEach(function(el){
-      const lvl = levelOf(p, el.key);
+      let body = '';
       [3,6,10].forEach(function(threshold){
         if(lvl >= threshold && SKILL_TEXT[el.key][threshold]){
-          skillsHtml += '<div class="skill-row">' +
-            '<span class="badge" style="--el-color:'+el.color+'">'+el.name+' Lv.'+threshold+'</span>' +
+          body += '<div class="skill-row">' +
+            '<span class="badge" style="--el-color:'+el.color+'">Lv.'+threshold+'</span>' +
             '<p class="skill-desc">'+SKILL_TEXT[el.key][threshold]+'</p>' +
             '</div>';
         }
       });
+      if(!body) body = '<p class="empty-note">아직 해금된 스킬이 없습니다.</p>';
+      const isOpen = openAccordionKey === el.key;
+      return '<div class="stat-accordion-item'+(isOpen?' open':'')+'" data-el-key="'+el.key+'">' +
+        '<button class="stat-accordion-header" style="--el-color:'+el.color+'">' +
+          '<span class="stat-accordion-name">'+el.name+'</span>' +
+          '<span class="stat-accordion-meta"><span>'+stat+' \u00b7 Lv.'+lvl+'</span><span class="stat-accordion-chevron">\u25be</span></span>' +
+        '</button>' +
+        '<div class="stat-accordion-body">'+body+'</div>' +
+      '</div>';
+    }).join('');
+    document.querySelectorAll('.stat-accordion-item').forEach(function(item){
+      const body = item.querySelector('.stat-accordion-body');
+      if(item.classList.contains('open')){
+        body.style.maxHeight = body.scrollHeight+'px';
+      }
     });
-    $('pc-skills').innerHTML = skillsHtml || '<p class="empty-note">아직 해금된 스킬이 없습니다.</p>';
+
+    stagedTransferItemIds = stagedTransferItemIds.filter(function(id){
+      return p.inventory.some(function(i){ return i.id === id; });
+    });
 
     const slotsWrap = $('pc-slots');
     slotsWrap.innerHTML = '';
@@ -1803,37 +1833,68 @@ const db = getFirestore(firebaseApp);
       slotsWrap.appendChild(slot);
     }
 
-    const itemSel = $('transfer-item-select');
-    itemSel.innerHTML = '<option value="">아티팩트를 선택하세요</option>' +
-      p.inventory.map(function(item){
-        const r = resolveItem(item);
-        return '<option value="'+item.id+'">'+(r.name || ELEMENT_NAME[r.element])+' ('+ELEMENT_NAME[r.element]+' +'+r.value+')</option>';
-      }).join('');
-
-    const targetSel = $('transfer-target-select');
-    targetSel.innerHTML = '<option value="">캐릭터를 선택하세요</option>' +
-      allPlayersCache.filter(function(x){ return x.id !== p.id; }).map(function(x){
-        return '<option value="'+x.id+'">'+x.name+'</option>';
-      }).join('');
+    $('transfer-target-list').innerHTML = allPlayersCache.filter(function(x){ return x.id !== p.id; })
+      .map(function(x){ return '<option value="'+x.name+'">'; }).join('');
 
     $('transfer-status').textContent = '';
     $('portrait-status').textContent = '';
-    $('transfer-dropzone').textContent = '아티팩트를 여기로 끌어다 놓으세요';
-    $('transfer-dropzone').classList.remove('dropzone-filled');
+    renderDropzoneChips();
   }
 
-  /* ---- drag & drop / touch transfer ---- */
+  /* ---- stat/skill accordion ---- */
 
-  function selectItemForTransfer(itemId){
+  $('pc-stat-accordion').addEventListener('click', function(e){
+    const header = e.target.closest('.stat-accordion-header');
+    if(!header) return;
+    const item = header.closest('.stat-accordion-item');
+    const key = item.getAttribute('data-el-key');
+    const body = item.querySelector('.stat-accordion-body');
+    const willOpen = openAccordionKey !== key;
+    document.querySelectorAll('.stat-accordion-item').forEach(function(other){
+      other.classList.remove('open');
+      other.querySelector('.stat-accordion-body').style.maxHeight = '0px';
+    });
+    if(willOpen){
+      item.classList.add('open');
+      body.style.maxHeight = body.scrollHeight+'px';
+      openAccordionKey = key;
+    } else {
+      openAccordionKey = null;
+    }
+  });
+
+  /* ---- drag & drop / touch transfer (multi-item staging) ---- */
+
+  function renderDropzoneChips(){
     const p = currentPortalPlayer();
-    if(!p) return;
-    const item = p.inventory.find(function(i){ return i.id === itemId; });
-    if(!item) return;
-    $('transfer-item-select').value = itemId;
-    const r = resolveItem(item);
-    $('transfer-dropzone').textContent = '선택됨: '+(r.name || ELEMENT_NAME[r.element]);
-    $('transfer-dropzone').classList.add('dropzone-filled');
-    $('transfer-target-select').focus();
+    const dz = $('transfer-dropzone');
+    if(!p || stagedTransferItemIds.length === 0){
+      dz.innerHTML = '<span id="dropzone-placeholder">아티팩트를 여기로 끌어다 놓으세요</span>';
+      dz.classList.remove('dropzone-filled');
+      return;
+    }
+    dz.classList.add('dropzone-filled');
+    dz.innerHTML = stagedTransferItemIds.map(function(id){
+      const item = p.inventory.find(function(i){ return i.id === id; });
+      if(!item) return '';
+      const r = resolveItem(item);
+      return '<span class="drop-chip" style="--el-color:'+ELEMENT_COLOR[r.element]+'">'+(r.name || ELEMENT_NAME[r.element])+
+        '<button type="button" class="chip-remove" data-unstage="'+id+'">\u00d7</button></span>';
+    }).join('');
+  }
+
+  $('transfer-dropzone').addEventListener('click', function(e){
+    const id = e.target.getAttribute('data-unstage');
+    if(!id) return;
+    stagedTransferItemIds = stagedTransferItemIds.filter(function(x){ return x !== id; });
+    renderDropzoneChips();
+  });
+
+  function stageItemForTransfer(itemId){
+    if(stagedTransferItemIds.indexOf(itemId) === -1){
+      stagedTransferItemIds.push(itemId);
+    }
+    renderDropzoneChips();
   }
 
   function attachDragHandlers(slot, itemId){
@@ -1873,7 +1934,7 @@ const db = getFirestore(firebaseApp);
       const rect = dz.getBoundingClientRect();
       const over = touch.clientX>=rect.left && touch.clientX<=rect.right && touch.clientY>=rect.top && touch.clientY<=rect.bottom;
       dz.classList.remove('dropzone-hover');
-      if(over) selectItemForTransfer(dragState.itemId);
+      if(over) stageItemForTransfer(dragState.itemId);
       dragState.ghostEl.remove();
       dragState = null;
     });
@@ -1891,11 +1952,15 @@ const db = getFirestore(firebaseApp);
       e.preventDefault();
       dz.classList.remove('dropzone-hover');
       const itemId = e.dataTransfer.getData('text/plain');
-      if(itemId) selectItemForTransfer(itemId);
+      if(itemId) stageItemForTransfer(itemId);
     });
   })();
 
-  /* ---- portrait upload ---- */
+  /* ---- portrait upload (click portrait to change) ---- */
+
+  $('portrait-click-area').addEventListener('click', function(){
+    $('pc-image-input').click();
+  });
 
   $('pc-image-input').addEventListener('change', function(e){
     const file = e.target.files[0];
@@ -1903,7 +1968,7 @@ const db = getFirestore(firebaseApp);
     const reader = new FileReader();
     reader.onload = function(ev){
       const img = new Image();
-      img.onload = function(){
+      img.onload = async function(){
         const maxDim = 320;
         let w = img.width, h = img.height;
         if(w > h){ if(w > maxDim){ h = Math.round(h*maxDim/w); w = maxDim; } }
@@ -1915,52 +1980,53 @@ const db = getFirestore(firebaseApp);
         $('pc-portrait').src = pendingPortraitDataUrl;
         $('pc-portrait').style.display = 'block';
         $('pc-portrait-placeholder').style.display = 'none';
-        $('portrait-status').textContent = '이미지를 선택했습니다. "적용" 버튼을 눌러 저장하세요.';
+
+        const p = currentPortalPlayer();
+        if(p){
+          p.imageUrl = pendingPortraitDataUrl;
+          const ok = await savePlayer(p);
+          $('portrait-status').textContent = ok ? '초상화가 저장되었습니다.' : '저장에 실패했습니다.';
+        }
       };
       img.src = ev.target.result;
     };
     reader.readAsDataURL(file);
   });
 
-  $('btn-save-portrait').addEventListener('click', async function(){
-    const p = currentPortalPlayer();
-    if(!p) return;
-    if(!pendingPortraitDataUrl){
-      $('portrait-status').textContent = '먼저 이미지 파일을 선택하세요.';
-      return;
-    }
-    p.imageUrl = pendingPortraitDataUrl;
-    const ok = await savePlayer(p);
-    $('portrait-status').textContent = ok ? '초상화가 적용되었습니다.' : '저장에 실패했습니다.';
-    renderPortalChar();
-  });
-
   $('btn-transfer').addEventListener('click', async function(){
     const p = currentPortalPlayer();
     if(!p) return;
-    const itemId = $('transfer-item-select').value;
-    const targetId = $('transfer-target-select').value;
-    if(!itemId || !targetId){
-      $('transfer-status').textContent = '양도할 아티팩트와 받을 캐릭터를 모두 선택하세요.';
+    const targetName = $('transfer-target-input').value.trim();
+    if(stagedTransferItemIds.length === 0 || !targetName){
+      $('transfer-status').textContent = '양도할 아티팩트를 끌어다 놓고, 받을 캐릭터 이름을 입력하세요.';
       return;
     }
     allPlayersCache = await loadAllPlayers();
     const freshSelf = allPlayersCache.find(function(x){ return x.id === p.id; });
-    const target = allPlayersCache.find(function(x){ return x.id === targetId; });
-    if(!freshSelf || !target) return;
-    if(target.inventory.length >= INVENTORY_MAX){
-      $('transfer-status').textContent = target.name+'의 인벤토리가 가득 차 있어 양도할 수 없습니다.';
+    const target = allPlayersCache.find(function(x){ return x.name === targetName; });
+    if(!freshSelf) return;
+    if(!target){
+      $('transfer-status').textContent = '"'+targetName+'" 이름의 캐릭터를 찾을 수 없습니다.';
       return;
     }
-    const item = freshSelf.inventory.find(function(i){ return i.id === itemId; });
-    if(!item){
+    if(target.id === freshSelf.id){
+      $('transfer-status').textContent = '자기 자신에게는 양도할 수 없습니다.';
+      return;
+    }
+    const itemsToMove = freshSelf.inventory.filter(function(i){ return stagedTransferItemIds.indexOf(i.id) !== -1; });
+    if(itemsToMove.length === 0){
       $('transfer-status').textContent = '이미 처리된 아티팩트입니다. 새로고침 후 다시 시도하세요.';
+      stagedTransferItemIds = [];
       renderPortalChar();
       return;
     }
-    const label = resolveItem(item).name || ELEMENT_NAME[resolveItem(item).element];
-    freshSelf.inventory = freshSelf.inventory.filter(function(i){ return i.id !== itemId; });
-    target.inventory.push(item);
+    if(target.inventory.length + itemsToMove.length > INVENTORY_MAX){
+      $('transfer-status').textContent = target.name+'의 인벤토리 공간이 부족합니다. (남은 칸: '+(INVENTORY_MAX-target.inventory.length)+')';
+      return;
+    }
+    const labels = itemsToMove.map(function(i){ const r = resolveItem(i); return r.name || ELEMENT_NAME[r.element]; });
+    freshSelf.inventory = freshSelf.inventory.filter(function(i){ return stagedTransferItemIds.indexOf(i.id) === -1; });
+    target.inventory = target.inventory.concat(itemsToMove);
     await savePlayer(freshSelf);
     await savePlayer(target);
     allPlayersCache = allPlayersCache.map(function(x){
@@ -1968,7 +2034,9 @@ const db = getFirestore(firebaseApp);
       if(x.id === target.id) return target;
       return x;
     });
-    $('transfer-status').textContent = '"'+label+'"을(를) '+target.name+'에게 양도했습니다.';
+    stagedTransferItemIds = [];
+    $('transfer-target-input').value = '';
+    $('transfer-status').textContent = labels.join(', ')+'을(를) '+target.name+'에게 양도했습니다.';
     renderPortalChar();
   });
 
