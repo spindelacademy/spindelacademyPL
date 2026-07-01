@@ -111,13 +111,55 @@
   .item-slots{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:1rem 0;}
   @media(max-width:560px){.item-slots{grid-template-columns:repeat(2,1fr);}}
   .item-slot{
-    border:1px solid var(--border);border-radius:8px;padding:8px;min-height:70px;
-    background:var(--panel2);display:flex;flex-direction:column;justify-content:space-between;font-size:12px;
+    border:1px solid var(--border);border-top:3px solid var(--el-color, var(--border));border-radius:10px;
+    padding:12px 8px;min-height:76px;
+    background:var(--panel2);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;gap:6px;font-size:12px;
   }
-  .item-slot.empty{border-style:dashed;color:var(--text-mute);align-items:center;justify-content:center;text-align:center;}
-  .item-slot .el-name{font-weight:600;font-size:13px;}
-  .item-slot .el-value{font-size:12px;color:var(--text-dim);}
-  .item-slot button{margin-top:6px;font-size:11px;padding:4px 6px;}
+  .item-slot.empty{border-top-color:var(--border);border-style:dashed;color:var(--text-mute);}
+  .item-slot .el-name{font-weight:600;font-size:13px;line-height:1.3;}
+  .item-slot .el-value{
+    font-size:11px;padding:2px 9px;border-radius:20px;
+    border:1px solid var(--el-color);color:var(--el-color);white-space:nowrap;
+  }
+  .item-slot button{margin-top:2px;font-size:11px;padding:4px 6px;}
+
+  /* ---- player portal: character sheet ---- */
+  .portal-topbar{display:flex;justify-content:flex-end;margin-bottom:.75rem;}
+  .char-sheet-header{
+    display:flex;flex-direction:column;align-items:center;text-align:center;
+    padding:1.75rem 1rem 1.5rem;margin-bottom:1rem;
+    background:radial-gradient(ellipse at top, rgba(217,142,63,.14), transparent 70%), var(--panel);
+    border:1px solid var(--border);border-radius:14px;
+  }
+  .portrait-frame{
+    width:108px;height:108px;border-radius:50%;
+    border:3px solid var(--accent);
+    background:var(--panel2);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;margin-bottom:.9rem;flex-shrink:0;
+    box-shadow:0 0 0 4px rgba(217,142,63,.15);
+  }
+  .portrait-frame img{width:100%;height:100%;object-fit:cover;}
+  .portrait-placeholder{font-family:'Cinzel',serif;font-size:38px;color:var(--accent);}
+  .char-sheet-name{font-size:23px;color:var(--accent);margin-bottom:.9rem;}
+  .hp-bar-wrap{width:100%;max-width:280px;margin-bottom:.75rem;}
+  .hp-bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);margin-bottom:4px;}
+  .hp-bar-outer{height:12px;background:var(--bg);border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+  .hp-bar-inner{height:100%;background:linear-gradient(90deg,#8a3f3f,#e2564f);width:100%;transition:width .3s;}
+  .help-request-display{font-size:12px;color:var(--text-dim);display:flex;gap:8px;align-items:center;}
+  .help-dot{width:11px;height:11px;border-radius:50%;display:inline-block;border:1.5px solid var(--accent);}
+  .help-dot.filled{background:var(--accent);}
+  .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+  @media(min-width:420px){.stat-grid{grid-template-columns:repeat(3,1fr);}}
+  .stat-tile{
+    border:1px solid var(--border);border-top:3px solid var(--el-color);border-radius:8px;
+    padding:10px 6px;text-align:center;background:var(--panel2);
+  }
+  .stat-tile .stat-name{font-size:11px;color:var(--text-dim);margin-bottom:3px;}
+  .stat-tile .stat-value{font-size:19px;font-weight:600;color:var(--text);}
+  .stat-tile .stat-level{font-size:10px;color:var(--text-mute);margin-top:2px;}
+
   #battle-active{display:none;}
   .status-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-bottom:1rem;}
   .status-card{
@@ -278,6 +320,13 @@
       <div class="item-slots" id="item-slots"></div>
       <div class="panel-head" style="margin-top:.5rem;"><h3>계산된 능력치</h3></div>
       <div class="badges" id="inv-stats"></div>
+
+      <div class="panel-head" style="margin-top:1rem;"><h3>구조 요청 잔여 횟수</h3></div>
+      <div class="row" style="align-items:center;">
+        <span class="badge" id="inv-help-count" style="--el-color:var(--accent);"></span>
+        <button id="btn-help-minus">-1</button>
+        <button id="btn-help-reset">2회로 초기화</button>
+      </div>
     </div>
   </div>
 
@@ -324,14 +373,9 @@
 
 <div class="wrap" id="player-app" style="display:none;">
 
-  <header>
-    <div class="eyebrow">character portal</div>
-    <h1>내 캐릭터</h1>
-    <p style="color:var(--text-dim);font-size:13px;margin-top:4px;">시련의 탑에 등록된 내 캐릭터를 확인하세요.</p>
-  </header>
-
   <div id="login-view">
-    <div class="panel">
+    <div class="panel" style="margin-top:2.5rem;">
+      <div class="panel-head"><h2>캐릭터 로그인</h2></div>
       <label>캐릭터 이름</label>
       <input type="text" id="login-name" placeholder="캐릭터 이름을 입력하세요">
       <label style="margin-top:.75rem;">비밀번호</label>
@@ -343,16 +387,45 @@
   </div>
 
   <div id="char-view" style="display:none;">
-    <div class="panel">
-      <div class="panel-head"><h2 id="pc-name"></h2><button id="btn-logout">로그아웃</button></div>
-      <div class="badges" id="pc-stats"></div>
+
+    <div class="portal-topbar">
+      <button id="btn-logout">로그아웃</button>
     </div>
+
+    <div class="char-sheet-header">
+      <div class="portrait-frame">
+        <img id="pc-portrait" style="display:none;">
+        <div id="pc-portrait-placeholder" class="portrait-placeholder"></div>
+      </div>
+      <h1 class="char-sheet-name" id="pc-name"></h1>
+      <div class="hp-bar-wrap">
+        <div class="hp-bar-label"><span>체력</span><span id="pc-hp-text"></span></div>
+        <div class="hp-bar-outer"><div class="hp-bar-inner" id="pc-hp-bar"></div></div>
+      </div>
+      <div class="help-request-display" id="pc-help-display"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>능력치</h3></div>
+      <div class="stat-grid" id="pc-stat-grid"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h3>초상화 변경</h3></div>
+      <div class="form-row" style="grid-template-columns:1fr auto;">
+        <div><input type="text" id="pc-image-input" placeholder="이미지 URL을 붙여넣으세요"></div>
+        <button id="btn-save-portrait">적용</button>
+      </div>
+      <p class="footnote" id="portrait-status"></p>
+    </div>
+
     <div class="panel">
       <h3 style="margin-bottom:.5rem;">보유 아티팩트</h3>
       <div class="item-slots" id="pc-slots"></div>
     </div>
+
     <div class="panel">
-      <div class="panel-head"><h2>아티팩트 양도</h2></div>
+      <div class="panel-head"><h3>아티팩트 양도</h3></div>
       <div class="form-row">
         <div>
           <label>양도할 아티팩트</label>
@@ -413,7 +486,7 @@ const db = getFirestore(firebaseApp);
     dark: {10:10}
   };
 
-  const DEFAULT_MAX_HP = 100;
+  const DEFAULT_MAX_HP = 80;
   const INVENTORY_MAX = 10;
 
   const MONSTER_TEMPLATES = [
@@ -468,6 +541,9 @@ const db = getFirestore(firebaseApp);
       return '<span class="badge" style="--el-color:'+el.color+'">'+el.name+' '+stat+' \u00b7 Lv.'+lvl+'</span>';
     }).filter(Boolean).join('') || '<span class="badge dim">능력치 없음</span>';
   }
+
+  function helpRequestsOf(player){ return player.helpRequests !== undefined ? player.helpRequests : 2; }
+  function maxHpOf(player){ return player.maxHp || DEFAULT_MAX_HP; }
 
   /* ---------- storage (Firebase Firestore) ---------- */
 
@@ -711,6 +787,9 @@ const db = getFirestore(firebaseApp);
       id: name.replace(/\s+/g,'_') + '_' + Date.now().toString(36),
       name: name,
       password: password,
+      maxHp: DEFAULT_MAX_HP,
+      helpRequests: 2,
+      imageUrl: '',
       inventory: []
     };
     const ok = await savePlayer(player);
@@ -797,7 +876,26 @@ const db = getFirestore(firebaseApp);
     const full = p.inventory.length >= INVENTORY_MAX;
     $('btn-add-catalog-item').disabled = full;
     $('btn-add-custom-item').disabled = full;
+
+    $('inv-help-count').textContent = '구조 요청 '+helpRequestsOf(p)+' / 2';
   }
+
+  $('btn-help-minus').addEventListener('click', async function(){
+    const p = currentInvPlayer();
+    if(!p) return;
+    const cur = helpRequestsOf(p);
+    p.helpRequests = Math.max(0, cur - 1);
+    await savePlayer(p);
+    renderInventoryDetail(p.id);
+  });
+
+  $('btn-help-reset').addEventListener('click', async function(){
+    const p = currentInvPlayer();
+    if(!p) return;
+    p.helpRequests = 2;
+    await savePlayer(p);
+    renderInventoryDetail(p.id);
+  });
 
   $('item-slots').addEventListener('click', async function(e){
     const itemId = e.target.getAttribute('data-remove-item');
@@ -1376,6 +1474,7 @@ const db = getFirestore(firebaseApp);
   /* ============ 플레이어 화면 (portal mode) ============ */
 
   let sessionPlayerId = null;
+  const SESSION_KEY = 'trial_tower_portal_session';
 
   $('btn-login').addEventListener('click', async function(){
     const name = $('login-name').value.trim();
@@ -1391,6 +1490,7 @@ const db = getFirestore(firebaseApp);
       return;
     }
     sessionPlayerId = match.id;
+    try{ localStorage.setItem(SESSION_KEY, match.id); }catch(e){}
     artifactCatalogCache = await loadAllArtifacts();
     $('login-status').textContent = '';
     $('login-view').style.display = 'none';
@@ -1400,11 +1500,29 @@ const db = getFirestore(firebaseApp);
 
   $('btn-logout').addEventListener('click', function(){
     sessionPlayerId = null;
+    try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
     $('login-name').value = '';
     $('login-password').value = '';
     $('char-view').style.display = 'none';
     $('login-view').style.display = 'block';
   });
+
+  async function tryPortalAutoLogin(){
+    let savedId = null;
+    try{ savedId = localStorage.getItem(SESSION_KEY); }catch(e){}
+    if(!savedId) return;
+    allPlayersCache = await loadAllPlayers();
+    const match = allPlayersCache.find(function(p){ return p.id === savedId; });
+    if(!match){
+      try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+      return;
+    }
+    sessionPlayerId = match.id;
+    artifactCatalogCache = await loadAllArtifacts();
+    $('login-view').style.display = 'none';
+    $('char-view').style.display = 'block';
+    renderPortalChar();
+  }
 
   function currentPortalPlayer(){
     return allPlayersCache.find(function(p){ return p.id === sessionPlayerId; });
@@ -1413,8 +1531,40 @@ const db = getFirestore(firebaseApp);
   function renderPortalChar(){
     const p = currentPortalPlayer();
     if(!p) return;
+
     $('pc-name').textContent = p.name;
-    $('pc-stats').innerHTML = elementSummary(p);
+
+    if(p.imageUrl){
+      $('pc-portrait').src = p.imageUrl;
+      $('pc-portrait').style.display = 'block';
+      $('pc-portrait-placeholder').style.display = 'none';
+    } else {
+      $('pc-portrait').style.display = 'none';
+      $('pc-portrait-placeholder').style.display = 'flex';
+      $('pc-portrait-placeholder').textContent = (p.name||'?').charAt(0);
+    }
+    $('pc-image-input').value = p.imageUrl || '';
+
+    const maxHp = maxHpOf(p);
+    $('pc-hp-text').textContent = maxHp+' / '+maxHp;
+    $('pc-hp-bar').style.width = '100%';
+
+    const helpLeft = helpRequestsOf(p);
+    const dots = [];
+    for(let i=0;i<2;i++){
+      dots.push('<span class="help-dot'+(i<helpLeft?' filled':'')+'"></span>');
+    }
+    $('pc-help-display').innerHTML = '<span>구조 요청</span>' + dots.join('') + '<span>'+helpLeft+' / 2</span>';
+
+    $('pc-stat-grid').innerHTML = ELEMENTS.map(function(el){
+      const stat = computeStat(p, el.key);
+      const lvl = levelOf(p, el.key);
+      return '<div class="stat-tile" style="--el-color:'+el.color+'">' +
+        '<div class="stat-name">'+el.name+'</div>' +
+        '<div class="stat-value">'+stat+'</div>' +
+        '<div class="stat-level">Lv.'+lvl+'</div>' +
+        '</div>';
+    }).join('');
 
     const slotsWrap = $('pc-slots');
     slotsWrap.innerHTML = '';
@@ -1449,7 +1599,17 @@ const db = getFirestore(firebaseApp);
       }).join('');
 
     $('transfer-status').textContent = '';
+    $('portrait-status').textContent = '';
   }
+
+  $('btn-save-portrait').addEventListener('click', async function(){
+    const p = currentPortalPlayer();
+    if(!p) return;
+    p.imageUrl = $('pc-image-input').value.trim();
+    const ok = await savePlayer(p);
+    $('portrait-status').textContent = ok ? '초상화가 적용되었습니다.' : '저장에 실패했습니다.';
+    renderPortalChar();
+  });
 
   $('btn-transfer').addEventListener('click', async function(){
     const p = currentPortalPlayer();
@@ -1500,6 +1660,7 @@ const db = getFirestore(firebaseApp);
   if(isPortalMode){
     $('admin-app').style.display = 'none';
     $('player-app').style.display = 'block';
+    tryPortalAutoLogin();
   } else {
     $('player-app').style.display = 'none';
     refreshCharList();
