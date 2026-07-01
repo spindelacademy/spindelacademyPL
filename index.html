@@ -146,7 +146,8 @@
     text-align:center;
   }
   .sheet-portrait-box{flex:1 1 150px;gap:10px;}
-  .sheet-hp-box, .sheet-help-box{flex:1 1 120px;}
+  .sheet-vitals-box{flex:2 1 220px;flex-direction:row;justify-content:space-around;gap:18px;}
+  .vitals-col{display:flex;flex-direction:column;align-items:center;}
   .portrait-frame{
     width:92px;height:92px;border-radius:50%;
     border:3px solid var(--accent);
@@ -164,27 +165,28 @@
   .portrait-frame img{width:100%;height:100%;object-fit:cover;}
   .portrait-placeholder{font-family:'Cinzel',serif;font-size:32px;color:var(--accent);}
   .char-sheet-name{font-size:19px;color:var(--accent);}
-  .sheet-box-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
-  .hp-visual{display:flex;align-items:center;gap:10px;}
-  .hp-visual-bar{width:9px;height:52px;background:var(--bg);border-radius:5px;overflow:hidden;display:flex;align-items:flex-end;border:1px solid var(--border);}
+  .sheet-box-label{font-size:14px;font-weight:600;color:var(--text-dim);letter-spacing:.03em;margin-bottom:9px;}
+  .hp-visual{display:flex;align-items:center;gap:12px;}
+  .hp-visual-bar{width:10px;height:56px;background:var(--bg);border-radius:5px;overflow:hidden;display:flex;align-items:flex-end;border:1px solid var(--border);}
   .hp-visual-fill{width:100%;background:linear-gradient(180deg,#e2564f,#8a3f3f);border-radius:4px;transition:height .3s;}
-  .sheet-box-value{font-size:24px;font-weight:700;color:var(--text);font-family:'Cinzel',serif;}
-  .help-dots-row{display:flex;gap:6px;margin-bottom:6px;}
-  .help-dot{width:13px;height:13px;border-radius:50%;display:inline-block;border:1.5px solid var(--accent);}
+  .sheet-box-value{font-size:28px;font-weight:700;color:var(--text);font-family:'Cinzel',serif;}
+  .help-dots-row{display:flex;gap:7px;margin-bottom:8px;}
+  .help-dot{width:14px;height:14px;border-radius:50%;display:inline-block;border:1.5px solid var(--accent);}
   .help-dot.filled{background:var(--accent);}
 
   .stat-accordion-item{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;background:var(--panel2);}
   .stat-accordion-header{
     width:100%;background:none;border:none;border-left:4px solid var(--el-color);
-    border-radius:0;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;
+    border-radius:0;padding:14px;display:flex;align-items:center;justify-content:space-between;
     cursor:pointer;color:var(--text);
   }
   .stat-accordion-header:hover{color:var(--text);border-color:var(--el-color);}
   .stat-accordion-name{
     font-family:'Cinzel',serif;font-weight:700;font-size:17px;letter-spacing:.02em;color:var(--el-color);
   }
-  .stat-accordion-meta{font-size:13px;color:var(--text-dim);display:flex;align-items:center;gap:10px;}
-  .stat-accordion-chevron{transition:transform .2s;color:var(--text-mute);font-size:12px;}
+  .stat-accordion-meta{font-size:22px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:14px;font-family:'Cinzel',serif;}
+  .stat-accordion-meta .stat-accordion-level{font-size:14px;color:var(--text-dim);font-family:'Inter',sans-serif;font-weight:600;}
+  .stat-accordion-chevron{transition:transform .2s;color:var(--text-mute);font-size:12px;font-family:'Inter',sans-serif;}
   .stat-accordion-item.open .stat-accordion-chevron{transform:rotate(180deg);}
   .stat-accordion-body{max-height:0;overflow:hidden;transition:max-height .25s ease;padding:0 14px;}
   .stat-accordion-item.open .stat-accordion-body{padding:2px 14px 14px;}
@@ -212,10 +214,13 @@
   .drop-chip .chip-remove:hover{color:var(--danger);}
   .drag-ghost{position:fixed;pointer-events:none;z-index:9999;opacity:.85;}
 
-  .skill-row{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);}
+  .skill-row{display:grid;grid-template-columns:60px 1fr;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
   .skill-row:last-child{border-bottom:none;}
-  .skill-row .badge{flex-shrink:0;margin-top:1px;}
-  .skill-desc{font-size:12.5px;color:var(--text-dim);line-height:1.5;}
+  .skill-level-tag{
+    font-weight:700;font-size:13px;color:var(--el-color);border:1px solid var(--el-color);
+    border-radius:6px;padding:5px 0;text-align:center;white-space:nowrap;
+  }
+  .skill-desc{font-size:13px;color:var(--text-dim);line-height:1.55;margin:0;}
 
   #battle-active{display:none;}
   .status-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-bottom:1rem;}
@@ -472,17 +477,19 @@
         <input type="file" id="pc-image-input" accept="image/*" style="display:none;">
         <h1 class="char-sheet-name" id="pc-name"></h1>
       </div>
-      <div class="sheet-box sheet-hp-box">
-        <div class="sheet-box-label">체력</div>
-        <div class="hp-visual">
-          <div class="hp-visual-bar"><div class="hp-visual-fill" id="pc-hp-fill"></div></div>
-          <div class="sheet-box-value" id="pc-hp-text"></div>
+      <div class="sheet-box sheet-vitals-box">
+        <div class="vitals-col">
+          <div class="sheet-box-label">체력</div>
+          <div class="hp-visual">
+            <div class="hp-visual-bar"><div class="hp-visual-fill" id="pc-hp-fill"></div></div>
+            <div class="sheet-box-value" id="pc-hp-text"></div>
+          </div>
         </div>
-      </div>
-      <div class="sheet-box sheet-help-box">
-        <div class="sheet-box-label">구조 요청</div>
-        <div class="help-dots-row" id="pc-help-dots"></div>
-        <div class="sheet-box-value" id="pc-help-text" style="font-size:16px;"></div>
+        <div class="vitals-col">
+          <div class="sheet-box-label">구조 요청</div>
+          <div class="help-dots-row" id="pc-help-dots"></div>
+          <div class="sheet-box-value" id="pc-help-text" style="font-size:20px;"></div>
+        </div>
       </div>
     </div>
     <p class="footnote" id="portrait-status" style="margin:-6px 0 1rem;"></p>
@@ -504,8 +511,7 @@
         <span id="dropzone-placeholder">아티팩트를 여기로 끌어다 놓으세요</span>
       </div>
       <label>받을 캐릭터 이름</label>
-      <input type="text" id="transfer-target-input" list="transfer-target-list" placeholder="캐릭터 이름을 입력하세요">
-      <datalist id="transfer-target-list"></datalist>
+      <input type="text" id="transfer-target-input" placeholder="캐릭터 이름을 입력하세요">
       <button class="primary wide" id="btn-transfer" style="margin-top:.85rem;">양도하기</button>
       <p class="footnote" id="transfer-status"></p>
     </div>
@@ -1747,7 +1753,7 @@ const db = getFirestore(firebaseApp);
   let pendingPortraitDataUrl = null;
   let dragState = null;
   let stagedTransferItemIds = [];
-  let openAccordionKey = null;
+  let accordionOverrides = {};
 
   function renderPortalChar(){
     const p = currentPortalPlayer();
@@ -1769,7 +1775,7 @@ const db = getFirestore(firebaseApp);
 
     const maxHp = maxHpOf(p);
     const curHp = Math.max(0, Math.min(maxHp, currentHpOf(p)));
-    $('pc-hp-text').textContent = curHp+' / '+maxHp;
+    $('pc-hp-text').textContent = curHp;
     $('pc-hp-fill').style.height = (maxHp>0 ? (curHp/maxHp*100) : 0)+'%';
 
     const helpLeft = helpRequestsOf(p);
@@ -1787,17 +1793,19 @@ const db = getFirestore(firebaseApp);
       [3,6,10].forEach(function(threshold){
         if(lvl >= threshold && SKILL_TEXT[el.key][threshold]){
           body += '<div class="skill-row">' +
-            '<span class="badge" style="--el-color:'+el.color+'">Lv.'+threshold+'</span>' +
+            '<span class="skill-level-tag" style="--el-color:'+el.color+'">Lv.'+threshold+'</span>' +
             '<p class="skill-desc">'+SKILL_TEXT[el.key][threshold]+'</p>' +
             '</div>';
         }
       });
+      const hasSkills = body.length > 0;
       if(!body) body = '<p class="empty-note">아직 해금된 스킬이 없습니다.</p>';
-      const isOpen = openAccordionKey === el.key;
+      const defaultOpen = hasSkills;
+      const isOpen = accordionOverrides[el.key] !== undefined ? accordionOverrides[el.key] : defaultOpen;
       return '<div class="stat-accordion-item'+(isOpen?' open':'')+'" data-el-key="'+el.key+'">' +
         '<button class="stat-accordion-header" style="--el-color:'+el.color+'">' +
           '<span class="stat-accordion-name">'+el.name+'</span>' +
-          '<span class="stat-accordion-meta"><span>'+stat+' \u00b7 Lv.'+lvl+'</span><span class="stat-accordion-chevron">\u25be</span></span>' +
+          '<span class="stat-accordion-meta"><span>'+stat+'</span><span class="stat-accordion-level">Lv.'+lvl+'</span><span class="stat-accordion-chevron">\u25be</span></span>' +
         '</button>' +
         '<div class="stat-accordion-body">'+body+'</div>' +
       '</div>';
@@ -1833,9 +1841,6 @@ const db = getFirestore(firebaseApp);
       slotsWrap.appendChild(slot);
     }
 
-    $('transfer-target-list').innerHTML = allPlayersCache.filter(function(x){ return x.id !== p.id; })
-      .map(function(x){ return '<option value="'+x.name+'">'; }).join('');
-
     $('transfer-status').textContent = '';
     $('portrait-status').textContent = '';
     renderDropzoneChips();
@@ -1849,17 +1854,15 @@ const db = getFirestore(firebaseApp);
     const item = header.closest('.stat-accordion-item');
     const key = item.getAttribute('data-el-key');
     const body = item.querySelector('.stat-accordion-body');
-    const willOpen = openAccordionKey !== key;
-    document.querySelectorAll('.stat-accordion-item').forEach(function(other){
-      other.classList.remove('open');
-      other.querySelector('.stat-accordion-body').style.maxHeight = '0px';
-    });
-    if(willOpen){
+    const isOpen = item.classList.contains('open');
+    if(isOpen){
+      item.classList.remove('open');
+      body.style.maxHeight = '0px';
+      accordionOverrides[key] = false;
+    } else {
       item.classList.add('open');
       body.style.maxHeight = body.scrollHeight+'px';
-      openAccordionKey = key;
-    } else {
-      openAccordionKey = null;
+      accordionOverrides[key] = true;
     }
   });
 
