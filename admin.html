@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>시련의 탑</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#141009;
+    --panel:#1d170f;
+    --panel2:#251e14;
+    --border:#3c3222;
+    --border-strong:#544732;
+    --text:#ece3d1;
+    --text-dim:#a89980;
+    --text-mute:#7a6d5c;
+    --accent:#d98e3f;
+    --physical:#a8adb8;
+    --fire:#e2652f;
+    --frost:#5fbedb;
+    --lightning:#dfc23f;
+    --storm:#49b08c;
+    --dark:#9d7fe0;
+    --danger:#e2564f;
+    --success:#6fbf78;
+    --grade-common:#9ca8b3;
+    --grade-uncommon:#5fbf7a;
+    --grade-rare:#5fa8e0;
+    --grade-legendary:#e0b23f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    padding:2rem 1.25rem 4rem;
+    line-height:1.6;
+  }
+  .wrap{max-width:920px;margin:0 auto;}
+  h1,h2,h3{font-family:'Cinzel',serif;font-weight:700;letter-spacing:.02em;margin:0;}
+  h1{font-size:26px;color:var(--accent);}
+  h2{font-size:17px;color:var(--text);}
+  h3{font-size:14px;color:var(--text);font-weight:500;}
+  p{margin:0;}
+  .eyebrow{font-size:12px;color:var(--text-mute);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
+  header{margin-bottom:1.25rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);}
+  .nav{display:flex;gap:8px;margin-bottom:1.5rem;}
+  .nav button{flex:1;}
+  .nav button.active{background:var(--accent);color:#1a1206;border-color:var(--accent);font-weight:600;}
+  .tab{display:none;}
+  .tab.active{display:block;}
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.1rem 1.25rem;
+    margin-bottom:1rem;
+  }
+  .panel-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.9rem;flex-wrap:wrap;gap:6px;}
+  label{font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px;}
+  input[type=text], input[type=number], select{
+    width:100%;
+    background:var(--bg);
+    border:1px solid var(--border-strong);
+    border-radius:6px;
+    padding:8px 10px;
+    color:var(--text);
+    font-family:inherit;
+    font-size:14px;
+  }
+  input:focus, select:focus{outline:1px solid var(--accent);}
+  button{
+    font-family:inherit;
+    font-size:13px;
+    color:var(--text);
+    background:var(--panel2);
+    border:1px solid var(--border-strong);
+    border-radius:6px;
+    padding:9px 12px;
+    cursor:pointer;
+  }
+  button:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
+  button:active:not(:disabled){transform:scale(.98);}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+  button.primary{background:var(--accent);color:#1a1206;border-color:var(--accent);font-weight:600;}
+  button.primary:hover:not(:disabled){color:#1a1206;opacity:.9;}
+  button.wide{width:100%;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;}
+  .char-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:9px 10px;background:var(--panel2);border:1px solid var(--border);
+    border-radius:8px;margin-bottom:6px;gap:10px;flex-wrap:wrap;
+  }
+  .char-name{font-weight:600;font-size:14px;min-width:80px;}
+  .badges{display:flex;gap:6px;flex-wrap:wrap;flex:1;}
+  .badge{
+    font-size:11px;padding:2px 7px;border-radius:20px;
+    border:1px solid var(--el-color);color:var(--el-color);
+    white-space:nowrap;
+  }
+  .badge.dim{color:var(--text-mute);border-color:var(--border);}
+  .filter-chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:.6rem;}
+  .filter-chip{
+    font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border-strong);
+    background:var(--panel2);color:var(--text-dim);cursor:pointer;
+  }
+  .filter-chip.active{border-color:var(--chip-color, var(--accent));color:var(--chip-color, var(--accent));background:rgba(217,142,63,.08);}
+  .autocomplete-wrap{position:relative;}
+  .autocomplete-list{
+    position:absolute;top:100%;left:0;right:0;z-index:20;
+    background:var(--panel2);border:1px solid var(--border-strong);border-top:none;
+    border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;display:none;
+  }
+  .autocomplete-list.show{display:block;}
+  .autocomplete-item{padding:9px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);}
+  .autocomplete-item:last-child{border-bottom:none;}
+  .autocomplete-item:hover{background:var(--panel);color:var(--accent);}
+  .autocomplete-item .ac-meta{font-size:11px;color:var(--text-dim);margin-left:6px;}
+  .char-summary-wrap{margin-bottom:8px;}
+  .char-summary-card{
+    background:var(--panel2);border:1px solid var(--border);border-radius:10px;
+    padding:10px 12px;cursor:pointer;
+    display:flex;align-items:center;gap:12px;
+  }
+  .char-summary-card:hover{border-color:var(--accent);}
+  .char-summary-thumb{
+    width:42px;height:42px;border-radius:8px;background:var(--panel);
+    border:1px solid var(--border-strong);flex-shrink:0;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Cinzel',serif;font-size:17px;color:var(--accent);
+  }
+  .char-summary-thumb img{width:100%;height:100%;object-fit:cover;}
+  .char-summary-body{flex:1;min-width:0;}
+  .char-summary-top{display:flex;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap;}
+  .char-summary-top .char-name{font-size:14px;}
+  .char-summary-pw{font-size:11px;color:var(--text-mute);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 8px;}
+  .hp-mini{font-size:11px;color:var(--text-dim);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 9px;}
+  .char-summary-actions{margin-top:6px;}
+  .party-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.75rem;}
+  .slot{
+    border:1px dashed var(--border-strong);border-radius:8px;
+    padding:10px;min-height:60px;font-size:13px;color:var(--text-mute);
+    display:flex;flex-direction:column;justify-content:center;gap:6px;
+  }
+  .slot.filled{border-style:solid;border-color:var(--accent);color:var(--text);background:var(--panel2);}
+  .empty-note{color:var(--text-mute);font-size:13px;}
+  .form-row{display:grid;grid-template-columns:1fr 90px auto;gap:8px;align-items:end;margin-bottom:1rem;}
+  @media(max-width:520px){.form-row{grid-template-columns:1fr;}}
+  .item-slots{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:1rem 0;}
+  @media(max-width:560px){.item-slots{grid-template-columns:repeat(2,1fr);}}
+  .item-slot{
+    border:1px solid var(--border);border-top:3px solid var(--el-color, var(--border));border-radius:10px;
+    padding:12px 8px;min-height:76px;
+    background:var(--panel2);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;gap:10px;font-size:12px;
+  }
+  .item-slot.empty{border-top-color:var(--border);border-style:dashed;color:var(--text-mute);}
+  .item-slot .el-info{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .item-slot .el-name{font-weight:600;font-size:13px;line-height:1.3;}
+  .item-slot .el-value{
+    font-size:11px;padding:2px 9px;border-radius:20px;
+    border:1px solid var(--el-color);color:var(--el-color);white-space:nowrap;
+  }
+  .item-slot .el-grade{font-size:10px;font-weight:600;letter-spacing:.02em;}
+  .item-slot button{margin-top:2px;font-size:11px;padding:4px 6px;}
+
+  /* ---- player portal: character sheet ---- */
+  .portal-topbar{display:flex;justify-content:flex-end;margin-bottom:.75rem;}
+  .char-sheet-header{
+    display:flex;flex-wrap:wrap;gap:10px;
+    margin-bottom:1rem;
+  }
+  .sheet-box{
+    background:var(--panel);border:1px solid var(--border);border-radius:14px;
+    padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;
+  }
+  .sheet-portrait-box{flex:1.6 1 190px;gap:14px;padding:26px 16px;}
+  .sheet-vitals-box{flex:1 1 150px;flex-direction:column;gap:16px;}
+  .vitals-row{display:flex;flex-direction:column;align-items:center;width:100%;}
+  .portrait-frame{
+    width:168px;height:168px;border-radius:20px;
+    border:3px solid var(--accent);
+    background:var(--panel2);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;flex-shrink:0;cursor:pointer;
+    box-shadow:0 0 0 4px rgba(217,142,63,.15);
+    position:relative;
+  }
+  .portrait-frame:hover::after{
+    content:'변경';font-size:12px;color:#fff;
+    position:absolute;inset:0;background:rgba(0,0,0,.45);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .portrait-frame img{width:100%;height:100%;object-fit:cover;}
+  .portrait-placeholder{font-family:'Cinzel',serif;font-size:56px;color:var(--accent);}
+  .char-sheet-name{font-family:'Cinzel',serif;font-size:20px;color:var(--accent);}
+  .sheet-box-label{
+    font-family:'Cinzel',serif;font-size:15px;font-weight:700;color:var(--text-dim);
+    letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px;
+  }
+  .hp-visual{display:flex;align-items:center;gap:12px;}
+  .hp-visual-bar{width:10px;height:44px;background:var(--bg);border-radius:5px;overflow:hidden;display:flex;align-items:flex-end;border:1px solid var(--border);}
+  .hp-visual-fill{width:100%;background:linear-gradient(180deg,#e2564f,#8a3f3f);border-radius:4px;transition:height .3s;}
+  .sheet-box-value{font-size:26px;font-weight:700;color:var(--text);font-family:'Cinzel',serif;}
+  .help-dots-row{display:flex;gap:7px;margin-bottom:8px;}
+  .help-dot{width:14px;height:14px;border-radius:50%;display:inline-block;border:1.5px solid var(--accent);}
+  .help-dot.filled{background:var(--accent);}
+
+  .element-icon-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;}
+  .element-icon-tile{
+    border:1px solid var(--border);border-top:3px solid var(--el-color);border-radius:8px;
+    padding:8px 2px 7px;text-align:center;background:var(--panel2);
+  }
+  .element-icon-tile .element-icon{font-size:16px;margin-bottom:5px;filter:grayscale(.15);}
+  .element-icon-tile .element-value{font-size:18px;font-weight:700;color:var(--text);font-family:'Cinzel',serif;}
+  .element-icon-tile .element-name{font-size:9px;color:var(--text-dim);margin-top:3px;}
+
+  .item-slot[draggable="true"]{cursor:grab;}
+  .item-slot[draggable="true"]:active{cursor:grabbing;}
+  #transfer-dropzone{
+    border:2px dashed var(--border-strong);border-radius:10px;
+    padding:16px 14px;min-height:64px;color:var(--text-mute);font-size:13px;
+    margin-bottom:1rem;transition:background .15s,border-color .15s,color .15s;
+    display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;
+  }
+  #transfer-dropzone.dropzone-hover{border-color:var(--accent);background:rgba(217,142,63,.08);}
+  #transfer-dropzone.dropzone-filled{border-style:solid;border-color:var(--accent);justify-content:flex-start;}
+  #dropzone-placeholder{color:var(--text-mute);font-size:13px;}
+  .drop-chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--panel2);border:1px solid var(--el-color, var(--accent));border-radius:20px;
+    padding:5px 6px 5px 12px;font-size:12px;color:var(--text);
+  }
+  .drop-chip .chip-remove{
+    width:18px;height:18px;border-radius:50%;border:none;background:var(--bg);color:var(--text-dim);
+    display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;cursor:pointer;padding:0;
+  }
+  .drop-chip .chip-remove:hover{color:var(--danger);}
+  .drag-ghost{position:fixed;pointer-events:none;z-index:9999;opacity:.85;}
+
+  .skill-row{display:grid;grid-template-columns:72px 1fr;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
+  .skill-row:last-child{border-bottom:none;}
+  .skill-level-tag{
+    font-weight:700;font-size:11.5px;line-height:1.4;color:var(--el-color);border:1px solid var(--el-color);
+    border-radius:6px;padding:5px 2px;text-align:center;white-space:nowrap;
+  }
+  .skill-desc{font-size:13px;color:var(--text-dim);line-height:1.55;margin:0;}
+  #pc-level-row{margin-bottom:.85rem;}
+  #pc-skills-list{margin-bottom:1rem;}
+
+  #battle-active{display:none;}
+  .status-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-bottom:1rem;}
+  .status-card{
+    background:var(--panel);border:1px solid var(--border);border-radius:10px;
+    padding:10px;
+  }
+  .status-card.dead{opacity:.45;}
+  .status-card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .status-card .name{font-weight:600;font-size:13px;}
+  .hp-text{font-size:14px;font-weight:600;margin-bottom:5px;}
+  .bar-outer{height:7px;background:var(--bg);border-radius:5px;overflow:hidden;margin-bottom:8px;}
+  .bar-inner{height:100%;transition:width .25s;}
+  .status-tags{display:flex;gap:4px;flex-wrap:wrap;}
+  .tag{font-size:10px;padding:1px 6px;border-radius:20px;background:var(--panel2);color:var(--text-dim);border:1px solid var(--border);}
+  .tag.fire{color:var(--fire);border-color:var(--fire);}
+  .tag.frost{color:var(--frost);border-color:var(--frost);}
+  .tag.dark{color:var(--dark);border-color:var(--dark);}
+  .target-btn{width:100%;margin-top:6px;}
+  #floor-label{font-size:13px;color:var(--text-dim);}
+  #order-label{font-size:12px;color:var(--text-mute);margin-top:8px;}
+  #actor-prompt{
+    background:var(--panel2);border:1px solid var(--accent);border-radius:8px;
+    padding:10px 12px;margin-bottom:.75rem;font-size:13px;
+  }
+  #actor-prompt b{color:var(--accent);}
+  #log{
+    background:var(--panel);border:1px solid var(--border);border-radius:10px;
+    padding:.75rem 1rem;height:230px;overflow-y:auto;
+    display:flex;flex-direction:column-reverse;
+    font-size:13px;
+  }
+  #log p{margin:0 0 6px;line-height:1.5;}
+  .log-round{color:var(--text-dim);font-weight:600;margin-top:4px;}
+  .log-fire{color:var(--fire);}
+  .log-frost{color:var(--frost);}
+  .log-dark{color:var(--dark);}
+  .log-storm{color:var(--storm);}
+  .log-danger{color:var(--danger);}
+  .log-success{color:var(--success);}
+  .footnote{font-size:12px;color:var(--text-mute);margin-top:.4rem;}
+</style>
+</head>
+<body>
+<div class="wrap" id="admin-gate">
+  <div class="panel" style="margin-top:3rem;">
+    <div class="panel-head"><h2>운영자 인증</h2></div>
+    <label>운영자 비밀번호</label>
+    <input type="password" id="admin-gate-password" placeholder="비밀번호를 입력하세요">
+    <button class="primary wide" id="btn-admin-gate" style="margin-top:.85rem;">입장</button>
+    <p class="footnote" id="admin-gate-status"></p>
+  </div>
+</div>
+
+<div class="wrap" id="admin-app" style="display:none;">
+
+  <header>
+    <div class="eyebrow">turn-based tower rpg simulator</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h1>시련의 탑</h1>
+        <p style="color:var(--text-dim);font-size:13px;margin-top:4px;">캐릭터를 만들고, 아티팩트를 지급하고, 파티를 꾸려 탑에 도전하세요.</p>
+      </div>
+      <button id="btn-open-portal" style="white-space:nowrap;">플레이어 페이지 열기</button>
+    </div>
+  </header>
+
+  <div class="nav">
+    <button class="active" data-tab="tab-characters">캐릭터 목록</button>
+    <button data-tab="tab-artifacts">아티팩트 도감</button>
+    <button data-tab="tab-inventory">캐릭터 관리</button>
+    <button data-tab="tab-battle">전투 시뮬레이터</button>
+  </div>
+
+  <!-- ================= TAB: 캐릭터 관리 ================= -->
+  <div id="tab-characters" class="tab active">
+    <div class="panel">
+      <div class="panel-head"><h2>새 캐릭터 생성</h2></div>
+      <label>캐릭터 이름</label>
+      <input type="text" id="new-name" placeholder="이름을 입력하세요" maxlength="12">
+      <label style="margin-top:.75rem;">플레이어 비밀번호 (내 캐릭터 페이지 로그인용)</label>
+      <input type="text" id="new-password" placeholder="비워두면 자동으로 생성됩니다" maxlength="20">
+      <button class="primary wide" id="btn-save-char" style="margin-top:.75rem;">캐릭터 생성</button>
+      <p class="footnote" id="save-status"></p>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>등록된 캐릭터</h2><button id="btn-refresh-chars">새로고침</button></div>
+      <p class="footnote" style="margin-bottom:.6rem;">이 목록은 공유 저장소에 보관되어 이 페이지를 여는 누구나 볼 수 있습니다.</p>
+      <input type="text" id="char-search" placeholder="캐릭터 이름 검색" style="margin-bottom:.85rem;">
+      <div id="char-list"></div>
+    </div>
+  </div>
+
+  <!-- ================= TAB: 아티팩트 도감 ================= -->
+  <div id="tab-artifacts" class="tab">
+    <div class="panel">
+      <div class="panel-head"><h2 id="art-form-title">새 아티팩트 등록</h2></div>
+      <label>아티팩트 이름</label>
+      <input type="text" id="art-name" placeholder="예: 강철의 검" maxlength="20">
+      <div class="form-row" style="margin-top:.75rem;grid-template-columns:1fr 1fr 90px auto;">
+        <div>
+          <label>속성</label>
+          <select id="art-element">
+            <option value="physical">물리</option>
+            <option value="fire">화염</option>
+            <option value="frost">빙결</option>
+            <option value="lightning">전격</option>
+            <option value="storm">폭풍</option>
+            <option value="dark">암흑</option>
+          </select>
+        </div>
+        <div>
+          <label>등급</label>
+          <select id="art-grade">
+            <option value="common">일반</option>
+            <option value="uncommon">고급</option>
+            <option value="rare">희귀</option>
+            <option value="legendary">전설</option>
+          </select>
+        </div>
+        <div>
+          <label>수치 (+N)</label>
+          <input type="number" id="art-value" value="1" min="1" max="20">
+        </div>
+        <button class="primary" id="btn-save-artifact">도감에 등록</button>
+      </div>
+      <label style="margin-top:.75rem;">설명 (선택)</label>
+      <input type="text" id="art-desc" placeholder="아티팩트에 대한 짧은 설명">
+      <div class="row" style="margin-top:.5rem;">
+        <p class="footnote" id="art-save-status" style="flex:1;"></p>
+        <button id="btn-cancel-edit-artifact" style="display:none;">수정 취소</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>등록된 아티팩트</h2><button id="btn-refresh-artifacts">새로고침</button></div>
+      <p class="footnote" style="margin-bottom:.6rem;">이 목록도 공유 저장소에 보관되어 이 페이지를 여는 누구나 볼 수 있습니다. 값을 수정하면 이미 지급된 아티팩트에도 즉시 반영되고, 삭제하면 이미 지급된 아티팩트도 모든 캐릭터의 인벤토리에서 함께 삭제됩니다.</p>
+      <input type="text" id="artifact-search" placeholder="아티팩트 이름 검색" style="margin-bottom:.75rem;">
+      <div class="filter-chip-row" id="element-filter-row"></div>
+      <div class="filter-chip-row" id="grade-filter-row"></div>
+      <div id="artifact-list"></div>
+    </div>
+  </div>
+
+  <!-- ================= TAB: 아이템 창 관리 ================= -->
+  <div id="tab-inventory" class="tab">
+    <div class="panel">
+      <div class="panel-head"><h2>플레이어 선택</h2><button id="btn-refresh-inv">새로고침</button></div>
+      <select id="inv-player-select"><option value="">캐릭터를 선택하세요</option></select>
+    </div>
+    <div class="panel" id="inv-detail" style="display:none;">
+      <div class="panel-head"><h2 id="inv-name"></h2><span class="footnote" id="inv-count"></span></div>
+
+      <div class="form-row" style="grid-template-columns:1fr auto;">
+        <div class="autocomplete-wrap">
+          <label>지급할 아티팩트 검색</label>
+          <input type="text" id="inv-catalog-search" placeholder="아티팩트 이름을 입력하세요" autocomplete="off">
+          <div class="autocomplete-list" id="inv-catalog-suggestions"></div>
+        </div>
+        <button class="primary" id="btn-add-catalog-item">지급</button>
+      </div>
+      <p class="footnote" id="inv-catalog-empty-note" style="display:none;">등록된 아티팩트가 없습니다. 아티팩트 도감 탭에서 먼저 등록하세요.</p>
+
+      <div class="item-slots" id="item-slots"></div>
+      <div class="panel-head" style="margin-top:.5rem;"><h3>계산된 능력치</h3></div>
+      <div class="badges" id="inv-stats"></div>
+
+      <div class="panel-head" style="margin-top:1rem;"><h3>구조 요청 잔여 횟수</h3></div>
+      <div class="row" style="align-items:center;">
+        <span class="badge" id="inv-help-count" style="--el-color:var(--accent);"></span>
+        <button id="btn-help-minus">-1</button>
+        <button id="btn-help-reset">2회로 초기화</button>
+      </div>
+
+      <div class="panel-head" style="margin-top:1rem;"><h3>체력</h3></div>
+      <div class="form-row" style="grid-template-columns:100px 100px auto;align-items:center;">
+        <div>
+          <label>현재 체력</label>
+          <input type="number" id="inv-current-hp" min="0">
+        </div>
+        <div>
+          <label>최대 체력</label>
+          <input type="number" id="inv-max-hp" min="1">
+        </div>
+        <button id="btn-save-hp">저장</button>
+      </div>
+      <p class="footnote" id="inv-hp-status"></p>
+    </div>
+  </div>
+
+  <!-- ================= TAB: 전투 시뮬레이터 ================= -->
+  <div id="tab-battle" class="tab">
+
+    <div id="battle-setup">
+      <div class="panel">
+        <div class="panel-head"><h2>파티 (최대 3인)</h2><button id="btn-refresh-party">새로고침</button></div>
+        <div class="party-slots" id="party-slots"></div>
+        <div id="party-candidates"></div>
+      </div>
+      <div class="panel">
+        <label style="max-width:140px;">도전할 층 수</label>
+        <input type="number" id="max-floor" value="5" min="1" max="20" style="max-width:140px;margin-bottom:.85rem;">
+        <button class="primary wide" id="btn-start" disabled>시련의 탑 입장</button>
+      </div>
+    </div>
+
+    <div id="battle-active">
+      <div class="panel">
+        <div class="panel-head">
+          <h2 id="floor-label">1층</h2>
+          <span id="round-label" style="font-size:13px;color:var(--text-dim);">라운드 1</span>
+        </div>
+        <div class="status-row" id="party-status"></div>
+      </div>
+      <div class="panel">
+        <h2 style="margin-bottom:.75rem;">몬스터</h2>
+        <div class="status-row" id="monster-status"></div>
+        <p id="order-label"></p>
+      </div>
+      <div class="panel" id="action-panel"></div>
+      <div class="panel"><div id="log"></div></div>
+      <div class="row" id="post-battle-controls" style="display:none;">
+        <button class="primary wide" id="btn-next-floor" style="display:none;">다음 층으로</button>
+        <button class="wide" id="btn-exit-tower">탑에서 나가기</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* ====== 여기에 Firebase 콘솔에서 복사한 firebaseConfig 값을 붙여넣으세요 ====== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDWZZ6nRE4kMvH_2WrGq6U4BKF99ToAAWY",
+  authDomain: "project-4966668896523357297.firebaseapp.com",
+  projectId: "project-4966668896523357297",
+  storageBucket: "project-4966668896523357297.firebasestorage.app",
+  messagingSenderId: "70275867723",
+  appId: "1:70275867723:web:ffff595e30956c700199ce"
+};
+/* ============================================================ */
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
+(function(){
+
+  const ELEMENTS = [
+    {key:'physical', name:'물리', color:'var(--physical)', icon:'\u2694\ufe0f'},
+    {key:'fire', name:'화염', color:'var(--fire)', icon:'\ud83d\udd25'},
+    {key:'frost', name:'빙결', color:'var(--frost)', icon:'\u2744\ufe0f'},
+    {key:'lightning', name:'전격', color:'var(--lightning)', icon:'\u26a1'},
+    {key:'storm', name:'폭풍', color:'var(--storm)', icon:'\ud83c\udf2a\ufe0f'},
+    {key:'dark', name:'암흑', color:'var(--dark)', icon:'\u25fc\ufe0f'}
+  ];
+  const ELEMENT_NAME = {};
+  const ELEMENT_COLOR = {};
+  ELEMENTS.forEach(function(e){ ELEMENT_NAME[e.key]=e.name; ELEMENT_COLOR[e.key]=e.color; });
+
+  const GRADES = [
+    {key:'common', name:'일반', color:'var(--grade-common)'},
+    {key:'uncommon', name:'고급', color:'var(--grade-uncommon)'},
+    {key:'rare', name:'희귀', color:'var(--grade-rare)'},
+    {key:'legendary', name:'전설', color:'var(--grade-legendary)'}
+  ];
+  const GRADE_NAME = {};
+  const GRADE_COLOR = {};
+  GRADES.forEach(function(g){ GRADE_NAME[g.key]=g.name; GRADE_COLOR[g.key]=g.color; });
+
+  const LEVEL_BONUS = {
+    physical: {3:8, 6:15, 10:30},
+    fire: {6:8},
+    frost: {6:5},
+    lightning: {6:4},
+    storm: {},
+    dark: {10:10}
+  };
+
+  const SKILL_TEXT = {
+    physical: {
+      3: '물리 +8. 공격 시 물리 능력치(%)만큼의 확률로 [치명타] 발동 \u2014 물리 능력치의 2배만큼 추가 피해.',
+      6: '물리 +15.',
+      10: '물리 +30.'
+    },
+    fire: {
+      3: '공격하면 [화상] 발동. 라운드가 종료될 때마다 화염 속성 피해.',
+      6: '화염 +8.',
+      10: '[화상] 피해가 연속 두 번 발생.'
+    },
+    frost: {
+      3: '공격하면 [동상] 발동. 동상에 걸린 적은 행동할 수 없으며, 공격받으면 해제됨.',
+      6: '빙결 +5.',
+      10: '동상이 풀릴 때 동상을 건 캐릭터의 빙결 능력치만큼 추가 피해.'
+    },
+    lightning: {
+      3: '공격하면 [벼락] 발동. 대상 외 다른 1명에게 전격 피해.',
+      6: '전격 +4. [벼락]이 다른 2명에게 적용.',
+      10: '[벼락] 발동 시 전격 능력치(%)의 확률로 재발동 (무한 연쇄 가능).'
+    },
+    storm: {
+      3: '[회피] 스택 5 획득. 스택 1당 도주 성공률 +10%. 도주할 때마다 스택 1 소모.',
+      6: '공격하면 한 번 더 공격.',
+      10: '남은 [회피] 스택 수 \u00d7 4만큼 폭풍 능력치 획득.'
+    },
+    dark: {
+      3: '공격하면 [실명] 부여 (대상 공격 50% 확률로 빗나감). 실명된 적을 공격할 때마다 암흑 능력치 임시 +2 (최대 4회, 이번 시련의 탑에서만 유지).',
+      6: '실명 대상 공격 시 임시 상승량이 +3으로 증가.',
+      10: '암흑 +10.'
+    }
+  };
+
+  const DEFAULT_MAX_HP = 80;
+  const INVENTORY_MAX = 10;
+
+  const MONSTER_TEMPLATES = [
+    {id:'m1', name:'고블린 전사', hp:45, atkMin:5, atkMax:8, spMin:12, spMax:16, spd:6},
+    {id:'m2', name:'슬라임', hp:30, atkMin:4, atkMax:6, spMin:10, spMax:13, spd:3},
+    {id:'m3', name:'오크 궁수', hp:60, atkMin:6, atkMax:9, spMin:14, spMax:18, spd:8}
+  ];
+
+  const state = {
+    party: [],
+    monsters: [],
+    floor: 1,
+    maxFloor: 5,
+    round: 1,
+    blockCount: 0,
+    actionQueue: [],
+    currentActorIdx: 0,
+    over: false
+  };
+
+  const $ = (id) => document.getElementById(id);
+  function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+
+  /* ---------- inventory-derived stats ---------- */
+
+  function itemsOf(player, key){ return (player.inventory||[]).filter(function(i){ return resolveItem(i).element===key; }); }
+  function levelOf(player, key){ return itemsOf(player,key).length; }
+
+  function computeStat(player, key){
+    const items = itemsOf(player, key);
+    const itemSum = items.reduce(function(s,i){ return s+resolveItem(i).value; }, 0);
+    let bonus = 0;
+    const table = LEVEL_BONUS[key];
+    [3,6,10].forEach(function(lvl){
+      if(items.length >= lvl && table[lvl]) bonus += table[lvl];
+    });
+    let stat = itemSum + bonus;
+    if(key === 'storm' && items.length >= 10){
+      stat += (player.evasionStacks||0) * 4;
+    }
+    if(key === 'dark'){
+      stat += (player.darkTempBonus||0);
+    }
+    return stat;
+  }
+
+  function elementSummary(player){
+    return ELEMENTS.map(function(el){
+      const lvl = levelOf(player, el.key);
+      if(lvl === 0) return null;
+      const stat = computeStat(player, el.key);
+      return '<span class="badge" style="--el-color:'+el.color+'">'+el.name+' '+stat+' \u00b7 Lv.'+lvl+'</span>';
+    }).filter(Boolean).join('') || '<span class="badge dim">능력치 없음</span>';
+  }
+
+  function helpRequestsOf(player){ return player.helpRequests !== undefined ? player.helpRequests : 2; }
+  function maxHpOf(player){ return player.maxHp || DEFAULT_MAX_HP; }
+  function currentHpOf(player){ return player.currentHp !== undefined ? player.currentHp : maxHpOf(player); }
+
+  function allStatsSummary(player){
+    return ELEMENTS.map(function(el){
+      const lvl = levelOf(player, el.key);
+      const stat = computeStat(player, el.key);
+      const dim = lvl === 0 ? ' dim' : '';
+      return '<span class="badge'+dim+'" style="--el-color:'+el.color+'">'+el.name+' '+stat+' \u00b7 Lv.'+lvl+'</span>';
+    }).join('');
+  }
+
+  /* ---------- storage (Firebase Firestore) ---------- */
+
+  async function savePlayer(player){
+    try{
+      await setDoc(doc(db, 'players', player.id), player);
+      return true;
+    }catch(e){ console.error('savePlayer 실패:', e); return false; }
+  }
+  async function loadAllPlayers(){
+    try{
+      const snap = await getDocs(collection(db, 'players'));
+      const players = [];
+      snap.forEach(function(d){ players.push(d.data()); });
+      return players;
+    }catch(e){ console.error('loadAllPlayers 실패:', e); return []; }
+  }
+  async function deletePlayerFromStorage(id){
+    try{ await deleteDoc(doc(db, 'players', id)); }catch(e){ console.error('deletePlayer 실패:', e); }
+  }
+
+  async function saveArtifact(artifact){
+    try{
+      await setDoc(doc(db, 'artifacts', artifact.id), artifact);
+      return true;
+    }catch(e){ console.error('saveArtifact 실패:', e); return false; }
+  }
+  async function loadAllArtifacts(){
+    try{
+      const snap = await getDocs(collection(db, 'artifacts'));
+      const artifacts = [];
+      snap.forEach(function(d){ artifacts.push(d.data()); });
+      return artifacts;
+    }catch(e){ console.error('loadAllArtifacts 실패:', e); return []; }
+  }
+  async function deleteArtifactFromStorage(id){
+    try{ await deleteDoc(doc(db, 'artifacts', id)); }catch(e){ console.error('deleteArtifact 실패:', e); }
+  }
+
+  /* ---------- nav ---------- */
+
+  document.querySelectorAll('.nav button').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.nav button').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+      btn.classList.add('active');
+      $(btn.getAttribute('data-tab')).classList.add('active');
+      if(btn.getAttribute('data-tab') === 'tab-artifacts') refreshArtifactList();
+      if(btn.getAttribute('data-tab') === 'tab-inventory') refreshInventoryTab();
+      if(btn.getAttribute('data-tab') === 'tab-battle') refreshPartyTab();
+    });
+  });
+
+  /* ============ TAB: 아티팩트 도감 ============ */
+
+  let artifactCatalogCache = [];
+  let editingArtifactId = null;
+
+  let activeElementFilters = new Set();
+  let activeGradeFilters = new Set();
+
+  async function refreshArtifactList(){
+    artifactCatalogCache = await loadAllArtifacts();
+    allPlayersCache = await loadAllPlayers();
+    buildFilterChips();
+    renderArtifactList();
+  }
+
+  function buildFilterChips(){
+    $('element-filter-row').innerHTML = ELEMENTS.map(function(el){
+      const active = activeElementFilters.has(el.key) ? ' active' : '';
+      return '<button type="button" class="filter-chip'+active+'" data-el-filter="'+el.key+'" style="--chip-color:'+el.color+'">'+el.name+'</button>';
+    }).join('');
+    $('grade-filter-row').innerHTML = GRADES.map(function(g){
+      const active = activeGradeFilters.has(g.key) ? ' active' : '';
+      return '<button type="button" class="filter-chip'+active+'" data-grade-filter="'+g.key+'" style="--chip-color:'+g.color+'">'+g.name+'</button>';
+    }).join('');
+  }
+
+  $('element-filter-row').addEventListener('click', function(e){
+    const key = e.target.getAttribute('data-el-filter');
+    if(!key) return;
+    if(activeElementFilters.has(key)) activeElementFilters.delete(key); else activeElementFilters.add(key);
+    e.target.classList.toggle('active');
+    renderArtifactList();
+  });
+
+  $('grade-filter-row').addEventListener('click', function(e){
+    const key = e.target.getAttribute('data-grade-filter');
+    if(!key) return;
+    if(activeGradeFilters.has(key)) activeGradeFilters.delete(key); else activeGradeFilters.add(key);
+    e.target.classList.toggle('active');
+    renderArtifactList();
+  });
+
+  $('artifact-search').addEventListener('input', renderArtifactList);
+
+  function renderArtifactList(){
+    const wrap = $('artifact-list');
+    wrap.innerHTML = '';
+    if(artifactCatalogCache.length === 0){
+      wrap.innerHTML = '<p class="empty-note">등록된 아티팩트가 없습니다.</p>';
+      return;
+    }
+    const query = ($('artifact-search').value || '').trim().toLowerCase();
+    const filtered = artifactCatalogCache.filter(function(a){
+      if(activeElementFilters.size > 0 && !activeElementFilters.has(a.element)) return false;
+      const grade = a.grade || 'common';
+      if(activeGradeFilters.size > 0 && !activeGradeFilters.has(grade)) return false;
+      if(query && a.name.toLowerCase().indexOf(query) === -1) return false;
+      return true;
+    });
+    if(filtered.length === 0){
+      wrap.innerHTML = '<p class="empty-note">조건에 맞는 아티팩트가 없습니다.</p>';
+      return;
+    }
+    filtered.forEach(function(a){
+      const grade = a.grade || 'common';
+      const row = document.createElement('div');
+      row.className = 'char-row';
+      row.innerHTML =
+        '<span class="char-name">'+a.name+'</span>' +
+        '<div class="badges">' +
+          '<span class="badge" style="--el-color:'+ELEMENT_COLOR[a.element]+'">'+ELEMENT_NAME[a.element]+' +'+a.value+'</span>' +
+          '<span class="badge" style="--el-color:'+GRADE_COLOR[grade]+'">'+GRADE_NAME[grade]+'</span>' +
+        '</div>' +
+        '<span class="footnote" style="flex:1;">'+(a.description||'')+'</span>' +
+        '<div class="row"><button data-grant-art="'+a.id+'">플레이어에게 지급</button><button data-edit-art="'+a.id+'">수정</button><button data-del-art="'+a.id+'">삭제</button></div>';
+      wrap.appendChild(row);
+
+      const grantRow = document.createElement('div');
+      grantRow.id = 'grant-row-'+a.id;
+      grantRow.className = 'form-row';
+      grantRow.style.display = 'none';
+      grantRow.style.marginTop = '-2px';
+      grantRow.style.marginBottom = '14px';
+      grantRow.innerHTML =
+        '<div><label>받을 캐릭터</label>' +
+        '<select id="grant-target-'+a.id+'"><option value="">캐릭터를 선택하세요</option>' +
+        allPlayersCache.map(function(p){ return '<option value="'+p.id+'">'+p.name+' ('+p.inventory.length+'/'+INVENTORY_MAX+')</option>'; }).join('') +
+        '</select></div>' +
+        '<button data-confirm-grant="'+a.id+'">지급하기</button>' +
+        '<button data-cancel-grant="'+a.id+'">취소</button>';
+      wrap.appendChild(grantRow);
+
+      const grantStatus = document.createElement('p');
+      grantStatus.id = 'grant-status-'+a.id;
+      grantStatus.className = 'footnote';
+      grantStatus.style.marginTop = '-8px';
+      grantStatus.style.marginBottom = '10px';
+      wrap.appendChild(grantStatus);
+    });
+  }
+
+  async function cascadeDeleteArtifact(artifactId){
+    const players = await loadAllPlayers();
+    for(const p of players){
+      const before = p.inventory.length;
+      p.inventory = p.inventory.filter(function(i){ return i.sourceArtifactId !== artifactId; });
+      if(p.inventory.length !== before){
+        await savePlayer(p);
+      }
+    }
+  }
+
+  $('artifact-list').addEventListener('click', async function(e){
+    const delId = e.target.getAttribute('data-del-art');
+    const editId = e.target.getAttribute('data-edit-art');
+    const grantId = e.target.getAttribute('data-grant-art');
+    const cancelGrantId = e.target.getAttribute('data-cancel-grant');
+    const confirmGrantId = e.target.getAttribute('data-confirm-grant');
+    if(delId){
+      await deleteArtifactFromStorage(delId);
+      await cascadeDeleteArtifact(delId);
+      if(editingArtifactId === delId) cancelArtifactEdit();
+      refreshArtifactList();
+    } else if(editId){
+      startArtifactEdit(editId);
+    } else if(grantId){
+      document.querySelectorAll('[id^="grant-row-"]').forEach(function(el){ el.style.display = 'none'; });
+      const row = $('grant-row-'+grantId);
+      if(row) row.style.display = 'grid';
+    } else if(cancelGrantId){
+      const row = $('grant-row-'+cancelGrantId);
+      if(row) row.style.display = 'none';
+    } else if(confirmGrantId){
+      const art = artifactCatalogCache.find(function(x){ return x.id === confirmGrantId; });
+      const targetId = $('grant-target-'+confirmGrantId).value;
+      const statusEl = $('grant-status-'+confirmGrantId);
+      if(!art || !targetId){
+        statusEl.textContent = '받을 캐릭터를 선택하세요.';
+        return;
+      }
+      const players = await loadAllPlayers();
+      const target = players.find(function(x){ return x.id === targetId; });
+      if(!target){ statusEl.textContent = '캐릭터를 찾을 수 없습니다.'; return; }
+      if(target.inventory.length >= INVENTORY_MAX){
+        statusEl.textContent = target.name+'의 인벤토리가 가득 찼습니다.';
+        return;
+      }
+      target.inventory.push({
+        id: 'item_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+        element: art.element,
+        value: art.value,
+        name: art.name,
+        description: art.description || '',
+        sourceArtifactId: art.id
+      });
+      await savePlayer(target);
+      statusEl.textContent = '"'+art.name+'"을(를) '+target.name+'에게 지급했습니다.';
+      $('grant-row-'+confirmGrantId).style.display = 'none';
+      allPlayersCache = players;
+    }
+  });
+
+  function startArtifactEdit(id){
+    const a = artifactCatalogCache.find(function(x){ return x.id === id; });
+    if(!a) return;
+    editingArtifactId = id;
+    $('art-name').value = a.name;
+    $('art-element').value = a.element;
+    $('art-grade').value = a.grade || 'common';
+    $('art-value').value = a.value;
+    $('art-desc').value = a.description || '';
+    $('art-form-title').textContent = '"'+a.name+'" 수정 중';
+    $('btn-save-artifact').textContent = '수정 저장';
+    $('btn-cancel-edit-artifact').style.display = 'inline-block';
+    $('art-save-status').textContent = '';
+  }
+
+  function cancelArtifactEdit(){
+    editingArtifactId = null;
+    $('art-name').value = '';
+    $('art-grade').value = 'common';
+    $('art-value').value = 1;
+    $('art-desc').value = '';
+    $('art-form-title').textContent = '새 아티팩트 등록';
+    $('btn-save-artifact').textContent = '도감에 등록';
+    $('btn-cancel-edit-artifact').style.display = 'none';
+  }
+
+  $('btn-cancel-edit-artifact').addEventListener('click', cancelArtifactEdit);
+
+  $('btn-save-artifact').addEventListener('click', async function(){
+    const name = $('art-name').value.trim();
+    if(!name){
+      $('art-save-status').textContent = '아티팩트 이름을 입력해주세요.';
+      return;
+    }
+    const artifact = {
+      id: editingArtifactId || ('art_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),
+      name: name,
+      element: $('art-element').value,
+      grade: $('art-grade').value,
+      value: Math.max(1, parseInt($('art-value').value,10) || 1),
+      description: $('art-desc').value.trim()
+    };
+    const wasEdit = !!editingArtifactId;
+    const ok = await saveArtifact(artifact);
+    $('art-save-status').textContent = ok
+      ? ('"'+name+'" '+(wasEdit ? '수정 완료. 이미 지급된 아티팩트에도 반영됩니다.' : '도감에 등록 완료.'))
+      : '저장에 실패했습니다.';
+    if(ok){
+      cancelArtifactEdit();
+      refreshArtifactList();
+    }
+  });
+
+  $('btn-refresh-artifacts').addEventListener('click', refreshArtifactList);
+
+  /* 인벤토리 아이템의 "실제 값"을 도감에서 실시간으로 가져온다.
+     도감 항목이 삭제되면 cascadeDeleteArtifact가 해당 아이템 자체를 인벤토리에서 제거하므로,
+     여기서의 fallback(item.element/value)은 아주 짧은 과도기 동안의 안전장치일 뿐이다. */
+  function resolveItem(item){
+    if(item.sourceArtifactId){
+      const art = artifactCatalogCache.find(function(a){ return a.id === item.sourceArtifactId; });
+      if(art){
+        return { element: art.element, value: art.value, name: art.name, description: art.description||'', grade: art.grade||'common' };
+      }
+    }
+    return { element: item.element, value: item.value, name: item.name||'', description: item.description||'', grade: item.grade||'common' };
+  }
+
+  /* ============ TAB: 캐릭터 관리 ============ */
+
+  let allPlayersCache = [];
+
+  async function refreshCharList(){
+    allPlayersCache = await loadAllPlayers();
+    renderCharList();
+  }
+
+  function renderCharList(){
+    const wrap = $('char-list');
+    wrap.innerHTML = '';
+    const query = ($('char-search').value || '').trim().toLowerCase();
+    const filtered = allPlayersCache.filter(function(p){
+      return !query || p.name.toLowerCase().indexOf(query) !== -1;
+    });
+    if(allPlayersCache.length === 0){
+      wrap.innerHTML = '<p class="empty-note">등록된 캐릭터가 없습니다.</p>';
+      return;
+    }
+    if(filtered.length === 0){
+      wrap.innerHTML = '<p class="empty-note">검색 결과가 없습니다.</p>';
+      return;
+    }
+    filtered.forEach(function(p){
+      const outer = document.createElement('div');
+      outer.className = 'char-summary-wrap';
+
+      const card = document.createElement('div');
+      card.className = 'char-summary-card';
+      card.setAttribute('data-goto', p.id);
+      const thumbInner = p.imageUrl
+        ? '<img src="'+p.imageUrl+'">'
+        : (p.name||'?').charAt(0);
+      card.innerHTML =
+        '<div class="char-summary-thumb">'+thumbInner+'</div>' +
+        '<div class="char-summary-body">' +
+          '<div class="char-summary-top">' +
+            '<span class="char-name">'+p.name+'</span>' +
+            '<span class="char-summary-pw">PW '+(p.password||'-')+'</span>' +
+            '<span class="hp-mini">체력 '+currentHpOf(p)+' / '+maxHpOf(p)+'</span>' +
+          '</div>' +
+          '<div class="badges">'+allStatsSummary(p)+'</div>' +
+        '</div>';
+      outer.appendChild(card);
+
+      const actions = document.createElement('div');
+      actions.className = 'row char-summary-actions';
+      actions.innerHTML =
+        '<button data-pw="'+p.id+'">비밀번호 재설정</button>' +
+        '<button data-del="'+p.id+'">삭제</button>';
+      outer.appendChild(actions);
+
+      const pwRow = document.createElement('div');
+      pwRow.id = 'pw-row-'+p.id;
+      pwRow.className = 'form-row';
+      pwRow.style.display = 'none';
+      pwRow.style.marginTop = '8px';
+      pwRow.innerHTML =
+        '<div><label>'+p.name+'의 새 비밀번호</label>' +
+        '<input type="text" id="pw-input-'+p.id+'" placeholder="비워두면 자동 생성"></div>' +
+        '<button data-savepw="'+p.id+'">저장</button>' +
+        '<button data-cancelpw="'+p.id+'">취소</button>';
+      outer.appendChild(pwRow);
+
+      wrap.appendChild(outer);
+    });
+  }
+
+  $('char-search').addEventListener('input', renderCharList);
+
+  function goToCharacterManage(playerId){
+    document.querySelectorAll('.nav button').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+    document.querySelector('.nav button[data-tab="tab-inventory"]').classList.add('active');
+    $('tab-inventory').classList.add('active');
+    refreshInventoryTab().then(function(){
+      $('inv-player-select').value = playerId;
+      renderInventoryDetail(playerId);
+    });
+  }
+
+  $('char-list').addEventListener('click', async function(e){
+    const gotoCard = e.target.closest('[data-goto]');
+    const delId = e.target.getAttribute('data-del');
+    const pwId = e.target.getAttribute('data-pw');
+    const savePwId = e.target.getAttribute('data-savepw');
+    const cancelPwId = e.target.getAttribute('data-cancelpw');
+    if(gotoCard){
+      goToCharacterManage(gotoCard.getAttribute('data-goto'));
+    } else if(delId){
+      await deletePlayerFromStorage(delId);
+      refreshCharList();
+    } else if(pwId){
+      document.querySelectorAll('[id^="pw-row-"]').forEach(function(el){ el.style.display = 'none'; });
+      const row = $('pw-row-'+pwId);
+      if(row) row.style.display = 'grid';
+    } else if(cancelPwId){
+      const row = $('pw-row-'+cancelPwId);
+      if(row) row.style.display = 'none';
+    } else if(savePwId){
+      const p = allPlayersCache.find(function(x){ return x.id === savePwId; });
+      if(!p) return;
+      const input = $('pw-input-'+savePwId);
+      const finalPw = (input.value||'').trim() || Math.floor(100000+Math.random()*900000).toString();
+      p.password = finalPw;
+      await savePlayer(p);
+      const row = $('pw-row-'+savePwId);
+      if(row){
+        row.innerHTML = '<p class="footnote" style="grid-column:1/-1;">'+p.name+'의 새 비밀번호: <b style="color:var(--accent);">'+finalPw+'</b> (플레이어에게 전달하세요)</p>';
+      }
+    }
+  });
+
+  $('btn-save-char').addEventListener('click', async function(){
+    const name = $('new-name').value.trim();
+    if(!name){
+      $('save-status').textContent = '이름을 입력해주세요.';
+      return;
+    }
+    const password = $('new-password').value.trim() || Math.floor(100000+Math.random()*900000).toString();
+    const player = {
+      id: name.replace(/\s+/g,'_') + '_' + Date.now().toString(36),
+      name: name,
+      password: password,
+      maxHp: DEFAULT_MAX_HP,
+      currentHp: DEFAULT_MAX_HP,
+      helpRequests: 2,
+      imageUrl: '',
+      inventory: []
+    };
+    const ok = await savePlayer(player);
+    $('save-status').textContent = ok
+      ? ('"'+name+'" 생성 완료. 로그인 비밀번호: '+password+' (플레이어에게 전달하세요)')
+      : '저장에 실패했습니다.';
+    if(ok){
+      $('new-name').value = '';
+      $('new-password').value = '';
+      refreshCharList();
+    }
+  });
+
+  $('btn-refresh-chars').addEventListener('click', refreshCharList);
+
+  /* ============ TAB: 아이템 창 관리 ============ */
+
+  async function refreshInventoryTab(){
+    allPlayersCache = await loadAllPlayers();
+    artifactCatalogCache = await loadAllArtifacts();
+    const sel = $('inv-player-select');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">캐릭터를 선택하세요</option>' +
+      allPlayersCache.map(function(p){ return '<option value="'+p.id+'">'+p.name+'</option>'; }).join('');
+    if(prev && allPlayersCache.some(function(p){return p.id===prev;})){
+      sel.value = prev;
+      renderInventoryDetail(prev);
+    } else {
+      $('inv-detail').style.display = 'none';
+    }
+  }
+
+  $('btn-refresh-inv').addEventListener('click', refreshInventoryTab);
+
+  $('inv-player-select').addEventListener('change', function(){
+    if(this.value) renderInventoryDetail(this.value);
+    else $('inv-detail').style.display = 'none';
+  });
+
+  let selectedGrantArtifactId = null;
+
+  function currentInvPlayer(){
+    const id = $('inv-player-select').value;
+    return allPlayersCache.find(function(p){ return p.id === id; });
+  }
+
+  function renderInventoryDetail(playerId){
+    const p = allPlayersCache.find(function(x){ return x.id === playerId; });
+    if(!p) return;
+    $('inv-detail').style.display = 'block';
+    $('inv-name').textContent = p.name+'의 인벤토리';
+    $('inv-count').textContent = (p.inventory.length)+' / '+INVENTORY_MAX+' 칸 사용 중';
+
+    selectedGrantArtifactId = null;
+    $('inv-catalog-search').value = '';
+    $('inv-catalog-suggestions').classList.remove('show');
+    $('inv-catalog-empty-note').style.display = artifactCatalogCache.length === 0 ? 'block' : 'none';
+
+    const slotsWrap = $('item-slots');
+    slotsWrap.innerHTML = '';
+    for(let i=0;i<INVENTORY_MAX;i++){
+      const item = p.inventory[i];
+      const slot = document.createElement('div');
+      if(item){
+        const r = resolveItem(item);
+        slot.className = 'item-slot';
+        slot.style.setProperty('--el-color', ELEMENT_COLOR[r.element]);
+        slot.innerHTML =
+          '<div class="el-info"><div class="el-name" style="color:'+ELEMENT_COLOR[r.element]+'">'+(r.name || ELEMENT_NAME[r.element])+'</div>' +
+          '<div class="el-value">'+ELEMENT_NAME[r.element]+' +'+r.value+'</div>' +
+          '<div class="el-grade" style="color:'+GRADE_COLOR[r.grade]+'">'+GRADE_NAME[r.grade]+'</div></div>' +
+          '<button data-remove-item="'+item.id+'">제거</button>';
+      } else {
+        slot.className = 'item-slot empty';
+        slot.textContent = '빈 슬롯';
+      }
+      slotsWrap.appendChild(slot);
+    }
+
+    $('inv-stats').innerHTML = elementSummary(p);
+    const full = p.inventory.length >= INVENTORY_MAX;
+    $('btn-add-catalog-item').disabled = full;
+
+    $('inv-help-count').textContent = '구조 요청 '+helpRequestsOf(p)+' / 2';
+
+    $('inv-current-hp').value = currentHpOf(p);
+    $('inv-max-hp').value = maxHpOf(p);
+    $('inv-hp-status').textContent = '';
+  }
+
+  $('btn-help-minus').addEventListener('click', async function(){
+    const p = currentInvPlayer();
+    if(!p) return;
+    const cur = helpRequestsOf(p);
+    p.helpRequests = Math.max(0, cur - 1);
+    await savePlayer(p);
+    renderInventoryDetail(p.id);
+  });
+
+  $('btn-help-reset').addEventListener('click', async function(){
+    const p = currentInvPlayer();
+    if(!p) return;
+    p.helpRequests = 2;
+    await savePlayer(p);
+    renderInventoryDetail(p.id);
+  });
+
+  $('btn-save-hp').addEventListener('click', async function(){
+    const p = currentInvPlayer();
+    if(!p) return;
+    const newMax = Math.max(1, parseInt($('inv-max-hp').value,10) || maxHpOf(p));
+    let newCur = parseInt($('inv-current-hp').value,10);
+    if(isNaN(newCur)) newCur = newMax;
+    newCur = Math.max(0, Math.min(newMax, newCur));
+    p.maxHp = newMax;
+    p.currentHp = newCur;
+    const ok = await savePlayer(p);
+    $('inv-hp-status').textContent = ok ? '체력이 저장되었습니다.' : '저장에 실패했습니다.';
+    renderInventoryDetail(p.id);
+  });
+
+  $('item-slots').addEventListener('click', async function(e){
+    const itemId = e.target.getAttribute('data-remove-item');
+    if(!itemId) return;
+    const p = currentInvPlayer();
+    if(!p) return;
+    p.inventory = p.inventory.filter(function(i){ return i.id !== itemId; });
+    await savePlayer(p);
+    renderInventoryDetail(p.id);
+  });
+
+  $('inv-catalog-search').addEventListener('input', function(){
+    selectedGrantArtifactId = null;
+    const query = this.value.trim().toLowerCase();
+    const box = $('inv-catalog-suggestions');
+    if(!query){
+      box.classList.remove('show');
+      box.innerHTML = '';
+      return;
+    }
+    const matches = artifactCatalogCache.filter(function(a){
+      return a.name.toLowerCase().indexOf(query) !== -1;
+    }).slice(0, 8);
+    if(matches.length === 0){
+      box.innerHTML = '<div class="autocomplete-item" style="color:var(--text-mute);">일치하는 아티팩트가 없습니다.</div>';
+      box.classList.add('show');
+      return;
+    }
+    box.innerHTML = matches.map(function(a){
+      const grade = a.grade || 'common';
+      return '<div class="autocomplete-item" data-pick-art="'+a.id+'">'+a.name+
+        '<span class="ac-meta">'+ELEMENT_NAME[a.element]+' +'+a.value+' \u00b7 '+GRADE_NAME[grade]+'</span></div>';
+    }).join('');
+    box.classList.add('show');
+  });
+
+  $('inv-catalog-suggestions').addEventListener('click', function(e){
+    const id = e.target.closest('[data-pick-art]');
+    if(!id) return;
+    const artId = id.getAttribute('data-pick-art');
+    const art = artifactCatalogCache.find(function(a){ return a.id === artId; });
+    if(!art) return;
+    selectedGrantArtifactId = art.id;
+    $('inv-catalog-search').value = art.name;
+    $('inv-catalog-suggestions').classList.remove('show');
+  });
+
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('.autocomplete-wrap')){
+      $('inv-catalog-suggestions').classList.remove('show');
+    }
+  });
+
+  $('btn-add-catalog-item').addEventListener('click', async function(){
+    const p = currentInvPlayer();
+    if(!p) return;
+    if(p.inventory.length >= INVENTORY_MAX) return;
+    const art = artifactCatalogCache.find(function(a){ return a.id === selectedGrantArtifactId; });
+    if(!art){
+      $('inv-catalog-search').focus();
+      return;
+    }
+    p.inventory.push({
+      id: 'item_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+      element: art.element,
+      value: art.value,
+      name: art.name,
+      description: art.description || '',
+      sourceArtifactId: art.id
+    });
+    await savePlayer(p);
+    renderInventoryDetail(p.id);
+  });
+
+  /* ============ TAB: 전투 시뮬레이터 - setup ============ */
+
+  async function refreshPartyTab(){
+    allPlayersCache = await loadAllPlayers();
+    renderPartySlots();
+    renderPartyCandidates();
+  }
+
+  $('btn-refresh-party').addEventListener('click', refreshPartyTab);
+
+  function renderPartyCandidates(){
+    const wrap = $('party-candidates');
+    wrap.innerHTML = '';
+    if(allPlayersCache.length === 0){
+      wrap.innerHTML = '<p class="empty-note">캐릭터 관리 탭에서 캐릭터를 먼저 생성하세요.</p>';
+      return;
+    }
+    allPlayersCache.forEach(function(p){
+      const inParty = state.party.some(function(m){ return m.id === p.id; });
+      const row = document.createElement('div');
+      row.className = 'char-row';
+      row.innerHTML =
+        '<span class="char-name">'+p.name+'</span>' +
+        '<div class="badges">'+elementSummary(p)+'</div>' +
+        '<button data-add="'+p.id+'" '+(inParty || state.party.length>=3 ? 'disabled':'')+'>'+(inParty?'파티에 있음':'파티에 추가')+'</button>';
+      wrap.appendChild(row);
+    });
+  }
+
+  $('party-candidates').addEventListener('click', function(e){
+    const addId = e.target.getAttribute('data-add');
+    if(!addId) return;
+    const p = allPlayersCache.find(function(x){ return x.id === addId; });
+    if(p && state.party.length < 3){
+      state.party.push(JSON.parse(JSON.stringify(p)));
+      renderPartySlots();
+      renderPartyCandidates();
+    }
+  });
+
+  function renderPartySlots(){
+    const wrap = $('party-slots');
+    wrap.innerHTML = '';
+    for(let i=0;i<3;i++){
+      const p = state.party[i];
+      const slot = document.createElement('div');
+      slot.className = 'slot' + (p ? ' filled' : '');
+      if(p){
+        slot.innerHTML = '<b>'+p.name+'</b><div class="badges">'+elementSummary(p)+'</div>' +
+          '<button data-remove="'+p.id+'" style="align-self:flex-start;">파티에서 제외</button>';
+      } else {
+        slot.textContent = '빈 슬롯';
+      }
+      wrap.appendChild(slot);
+    }
+    $('btn-start').disabled = state.party.length === 0;
+  }
+
+  $('party-slots').addEventListener('click', function(e){
+    const rid = e.target.getAttribute('data-remove');
+    if(rid){
+      state.party = state.party.filter(function(p){ return p.id !== rid; });
+      renderPartySlots();
+      renderPartyCandidates();
+    }
+  });
+
+  $('btn-start').addEventListener('click', async function(){
+    artifactCatalogCache = await loadAllArtifacts();
+    state.maxFloor = Math.max(1, Math.min(20, parseInt($('max-floor').value,10) || 5));
+    state.floor = 1;
+    state.round = 1;
+    state.party = state.party.map(function(p){
+      return Object.assign({}, p, {
+        hp: DEFAULT_MAX_HP,
+        maxHp: DEFAULT_MAX_HP,
+        evasionStacks: levelOf(p,'storm') >= 3 ? 5 : 0,
+        darkTempBonus: 0,
+        darkTempCount: 0,
+        alive: true
+      });
+    });
+    state.monsters = generateFloorMonsters(state.floor);
+    $('battle-setup').style.display = 'none';
+    $('battle-active').style.display = 'block';
+    log('시련의 탑에 입장했습니다. 1층 몬스터가 나타났습니다.', 'default');
+    startRound();
+  });
+
+  /* ---------- monster generation ---------- */
+
+  function scaleStat(base, floor){ return Math.round(base * (1 + 0.2*(floor-1))); }
+
+  function generateFloorMonsters(floor){
+    return MONSTER_TEMPLATES.map(function(t){
+      const hp = scaleStat(t.hp, floor);
+      return {
+        id: t.id, name: t.name,
+        hp: hp, maxHp: hp,
+        atkMin: scaleStat(t.atkMin, floor), atkMax: scaleStat(t.atkMax, floor),
+        spMin: scaleStat(t.spMin, floor), spMax: scaleStat(t.spMax, floor),
+        spd: t.spd,
+        burnActive:false, burnSourceStat:0, burnDouble:false,
+        frozen:false, frozenBy:null, frozenByStat:0,
+        blinded:false
+      };
+    });
+  }
+
+  /* ---------- logging ---------- */
+
+  function log(text, cls){
+    const p = document.createElement('p');
+    if(cls) p.className = 'log-'+cls;
+    p.textContent = text;
+    $('log').prepend(p);
+  }
+
+  /* ---------- damage helpers ---------- */
+
+  function dealAttackDamage(target, amount, sourceName){
+    if(amount <= 0 || target.hp <= 0) return;
+    if(target.frozen){
+      const freezer = state.party.find(function(p){ return p.id === target.frozenBy; });
+      target.frozen = false;
+      log(target.name+'의 [동상] 상태가 해제되었습니다.', 'frost');
+      if(freezer && levelOf(freezer,'frost') >= 10){
+        const punish = target.frozenByStat;
+        target.hp -= punish;
+        log('동상 해제 반격! '+target.name+'에게 빙결 피해 '+punish+' (동상을 건 '+freezer.name+' 기준)', 'frost');
+      }
+    }
+    target.hp -= amount;
+    if(target.hp < 0) target.hp = 0;
+    log(sourceName+'! '+target.name+'에게 '+amount+' 피해.', null);
+  }
+
+  function dealPassiveDamage(target, amount, sourceName){
+    if(amount <= 0 || target.hp <= 0) return;
+    target.hp -= amount;
+    if(target.hp < 0) target.hp = 0;
+    log('['+sourceName+'] '+target.name+'에게 '+amount+' 피해.', 'fire');
+  }
+
+  /* ---------- player attack (all elements, master rule) ---------- */
+
+  function performPlayerAttack(attacker, target){
+    if(target.hp <= 0) return;
+
+    const physStat = computeStat(attacker,'physical');
+    if(physStat > 0){
+      dealAttackDamage(target, physStat, attacker.name+'의 물리 공격');
+      if(target.hp<=0){ handleDeath(target); return; }
+      if(levelOf(attacker,'physical') >= 3){
+        const chance = Math.min(physStat,100);
+        if(rand(1,100) <= chance){
+          const critDmg = physStat*2;
+          dealAttackDamage(target, critDmg, '[스킬: 치명타] 추가 피해');
+          if(target.hp<=0){ handleDeath(target); return; }
+        }
+      }
+    }
+
+    const fireStat = computeStat(attacker,'fire');
+    if(fireStat > 0){
+      dealAttackDamage(target, fireStat, attacker.name+'의 화염 공격');
+      if(target.hp<=0){ handleDeath(target); return; }
+      if(levelOf(attacker,'fire') >= 3 && !target.burnActive){
+        target.burnActive = true;
+        target.burnSourceStat = fireStat;
+        target.burnDouble = levelOf(attacker,'fire') >= 10;
+        log('[스킬: 화상] 상태가 '+target.name+'에게 활성화되었습니다.', 'fire');
+      }
+    }
+
+    const frostStat = computeStat(attacker,'frost');
+    if(frostStat > 0){
+      dealAttackDamage(target, frostStat, attacker.name+'의 빙결 공격');
+      if(target.hp<=0){ handleDeath(target); return; }
+    }
+    if(levelOf(attacker,'frost') >= 3 && !target.frozen){
+      target.frozen = true;
+      target.frozenBy = attacker.id;
+      target.frozenByStat = frostStat;
+      log('[스킬: 동상] 상태가 '+target.name+'에게 활성화되었습니다. 행동할 수 없습니다.', 'frost');
+    }
+
+    const darkStat = computeStat(attacker,'dark');
+    if(darkStat > 0){
+      dealAttackDamage(target, darkStat, attacker.name+'의 암흑 공격');
+      if(target.hp<=0){ handleDeath(target); return; }
+    }
+    if(levelOf(attacker,'dark') >= 3){
+      if(target.blinded){
+        if((attacker.darkTempCount||0) < 4){
+          const inc = levelOf(attacker,'dark') >= 6 ? 3 : 2;
+          attacker.darkTempBonus = (attacker.darkTempBonus||0) + inc;
+          attacker.darkTempCount = (attacker.darkTempCount||0) + 1;
+          log(attacker.name+'의 암흑 능력치가 일시적으로 '+inc+' 상승했습니다. (누적 '+attacker.darkTempCount+'/4)', 'dark');
+        }
+      } else {
+        target.blinded = true;
+        log('[스킬: 실명]이 '+target.name+'에게 적용되었습니다.', 'dark');
+      }
+    }
+
+    const lightningStat = computeStat(attacker,'lightning');
+    if(levelOf(attacker,'lightning') >= 3){
+      const numTargets = levelOf(attacker,'lightning') >= 6 ? 2 : 1;
+      triggerChainLightning(attacker, target, numTargets, lightningStat);
+    }
+
+    if(target.hp<=0){ handleDeath(target); }
+  }
+
+  function triggerChainLightning(attacker, primaryTarget, numTargets, lightningStat){
+    function strike(){
+      const others = state.monsters.filter(function(m){ return m.hp>0 && m.id !== primaryTarget.id; });
+      if(others.length === 0) return;
+      const shuffled = others.slice().sort(function(){ return Math.random()-0.5; });
+      const chosen = shuffled.slice(0, Math.min(numTargets, others.length));
+      chosen.forEach(function(t){
+        dealAttackDamage(t, lightningStat, attacker.name+'의 [벼락]');
+        if(t.hp<=0) handleDeath(t);
+      });
+    }
+    strike();
+    if(levelOf(attacker,'lightning') >= 10){
+      let chains = 0;
+      while(chains < 50){
+        const chance = Math.min(lightningStat,100);
+        if(rand(1,100) <= chance){ chains++; strike(); } else break;
+      }
+      if(chains > 0) log('[벼락] 연쇄 발동 '+chains+'회 추가!', 'lightning');
+    }
+  }
+
+  function handleDeath(monster){
+    if(monster._deadLogged) return;
+    monster._deadLogged = true;
+    log(monster.name+'을(를) 처치했습니다.', 'success');
+  }
+
+  /* ---------- round flow ---------- */
+
+  function aliveParty(){ return state.party.filter(function(p){ return p.alive; }); }
+  function aliveMonsters(){ return state.monsters.filter(function(m){ return m.hp>0; }); }
+  function orderedAliveMonsters(){ return aliveMonsters().slice().sort(function(a,b){ return b.spd-a.spd; }); }
+
+  function startRound(){
+    if(state.over) return;
+    state.blockCount = 0;
+    state.actionQueue = aliveParty().map(function(p){ return p.id; });
+    state.currentActorIdx = 0;
+    log('\u2014 라운드 '+state.round+' \u00b7 파티 턴 \u2014', 'round');
+    renderBattle();
+  }
+
+  function currentActor(){
+    if(state.currentActorIdx >= state.actionQueue.length) return null;
+    const id = state.actionQueue[state.currentActorIdx];
+    return state.party.find(function(p){ return p.id === id && p.alive; }) || null;
+  }
+
+  function chooseAttack(monsterId){
+    const actor = currentActor();
+    if(!actor) return;
+    const target = state.monsters.find(function(m){ return m.id === monsterId; });
+    if(!target || target.hp <= 0) return;
+    performPlayerAttack(actor, target);
+    if(levelOf(actor,'storm') >= 6 && target.hp > 0){
+      log(actor.name+'이(가) [폭풍]의 힘으로 한 번 더 공격합니다!', 'storm');
+      performPlayerAttack(actor, target);
+    }
+    advanceQueue();
+  }
+
+  function chooseDefend(){
+    const actor = currentActor();
+    if(!actor) return;
+    state.blockCount++;
+    log(actor.name+'이(가) [방어] 태세를 취합니다.', 'default');
+    advanceQueue();
+  }
+
+  function advanceQueue(){
+    if(checkBattleEnd()) return;
+    state.currentActorIdx++;
+    if(state.currentActorIdx >= state.actionQueue.length){
+      monsterPhase();
+    } else {
+      renderBattle();
+    }
+  }
+
+  function partyWideFlee(){
+    const evaders = aliveParty().filter(function(p){ return levelOf(p,'storm')>=3 && p.evasionStacks>0; });
+    let bonus = 0, user = null;
+    if(evaders.length){
+      user = evaders.reduce(function(a,b){ return a.evasionStacks>b.evasionStacks?a:b; });
+      bonus = user.evasionStacks*10;
+      user.evasionStacks -= 1;
+    }
+    const chance = Math.min(50+bonus, 95);
+    const success = rand(1,100) <= chance;
+    log('파티가 도주를 시도합니다. (성공 확률 '+chance+'%)', 'default');
+    if(success){
+      log('도주에 성공했습니다! 전투를 이탈합니다.', 'success');
+      endBattle('flee');
+      return;
+    }
+    log('도주에 실패했습니다!', 'danger');
+    if(checkBattleEnd()) return;
+    monsterPhase();
+  }
+
+  function partyWideHelp(){
+    const alive = aliveMonsters();
+    const success = rand(1,100) <= 30;
+    if(success && alive.length){
+      const weakest = alive.reduce(function(a,b){ return a.hp<b.hp?a:b; });
+      dealPassiveDamage(weakest, 20, '지원군');
+      if(weakest.hp<=0) handleDeath(weakest);
+    } else {
+      log('구조 요청에 아무도 응답하지 않았습니다.', 'default');
+    }
+    if(checkBattleEnd()) return;
+    monsterPhase();
+  }
+
+  function monsterAI(){
+    const roll = rand(1,100);
+    if(roll <= 65) return 'attack';
+    if(roll <= 90) return 'defend';
+    return 'special';
+  }
+
+  function monsterPhase(){
+    log('\u2014 라운드 '+state.round+' \u00b7 몬스터 턴 \u2014', 'round');
+    orderedAliveMonsters().forEach(function(m){
+      if(m.hp <= 0) return;
+      if(m.frozen){
+        log(m.name+'은(는) [동상] 상태로 행동할 수 없습니다.', 'frost');
+        return;
+      }
+      const act = monsterAI();
+      if(act === 'defend'){
+        log(m.name+'이(가) 방어 태세를 취합니다.', 'default');
+        return;
+      }
+      if(m.blinded && rand(1,100) <= 50){
+        log(m.name+'의 공격이 [실명]으로 인해 빗나갔습니다!', 'success');
+        return;
+      }
+      const dmg = act === 'special' ? rand(m.spMin,m.spMax) : rand(m.atkMin,m.atkMax);
+      if(state.blockCount > 0){
+        state.blockCount--;
+        log(m.name+'의 공격! 방어로 완전히 무시했습니다.', 'success');
+        return;
+      }
+      const targets = aliveParty();
+      if(!targets.length) return;
+      const t = targets[rand(0,targets.length-1)];
+      t.hp -= dmg;
+      if(t.hp < 0) t.hp = 0;
+      log(m.name+'의 공격! '+t.name+'이(가) '+dmg+' 피해를 받았습니다.', 'danger');
+      if(t.hp <= 0){ t.alive = false; log(t.name+'이(가) 쓰러졌습니다.', 'danger'); }
+    });
+    if(checkBattleEnd()) return;
+    roundEndEffects();
+  }
+
+  function roundEndEffects(){
+    log('\u2014 라운드 '+state.round+' 종료 \u00b7 상태 효과 적용 \u2014', 'round');
+    state.monsters.forEach(function(m){
+      if(m.hp <= 0 || !m.burnActive) return;
+      const times = m.burnDouble ? 2 : 1;
+      for(let i=0;i<times;i++){
+        if(m.hp <= 0) break;
+        dealPassiveDamage(m, m.burnSourceStat, '화상');
+      }
+      if(m.hp<=0) handleDeath(m);
+    });
+    if(checkBattleEnd()) return;
+    state.round++;
+    startRound();
+  }
+
+  function checkBattleEnd(){
+    if(state.over) return true;
+    if(aliveMonsters().length === 0){
+      log('이 층의 몬스터를 모두 처치했습니다!', 'success');
+      finishFloor();
+      return true;
+    }
+    if(aliveParty().length === 0){
+      log('파티 전멸... 시련의 탑 도전에 실패했습니다.', 'danger');
+      endBattle('defeat');
+      return true;
+    }
+    return false;
+  }
+
+  function finishFloor(){
+    state.over = true;
+    renderBattle();
+    $('post-battle-controls').style.display = 'flex';
+    if(state.floor < state.maxFloor){
+      $('btn-next-floor').style.display = 'inline-block';
+    } else {
+      $('btn-next-floor').style.display = 'none';
+      log('시련의 탑 '+state.maxFloor+'층을 모두 클리어했습니다! 축하합니다.', 'success');
+    }
+  }
+
+  function endBattle(){
+    state.over = true;
+    renderBattle();
+    $('post-battle-controls').style.display = 'flex';
+    $('btn-next-floor').style.display = 'none';
+  }
+
+  $('btn-next-floor').addEventListener('click', function(){
+    state.floor++;
+    state.round = 1;
+    state.over = false;
+    state.monsters = generateFloorMonsters(state.floor);
+    $('post-battle-controls').style.display = 'none';
+    log(state.floor+'층으로 올라갑니다. 새로운 몬스터가 나타났습니다.', 'default');
+    startRound();
+  });
+
+  $('btn-exit-tower').addEventListener('click', function(){
+    state.party = [];
+    state.monsters = [];
+    state.floor = 1;
+    state.round = 1;
+    state.over = false;
+    $('log').innerHTML = '';
+    $('battle-active').style.display = 'none';
+    $('battle-setup').style.display = 'block';
+    refreshPartyTab();
+  });
+
+  /* ---------- rendering ---------- */
+
+  function barColor(ratio){
+    if(ratio > 0.5) return 'var(--success)';
+    if(ratio > 0.2) return 'var(--accent)';
+    return 'var(--danger)';
+  }
+
+  function renderBattle(){
+    $('floor-label').textContent = state.floor+'층';
+    $('round-label').textContent = '라운드 '+state.round;
+
+    const pWrap = $('party-status');
+    pWrap.innerHTML = '';
+    state.party.forEach(function(p){
+      const dead = !p.alive;
+      const ratio = Math.max(0,p.hp)/p.maxHp;
+      const card = document.createElement('div');
+      card.className = 'status-card'+(dead?' dead':'');
+      let tags = '';
+      if((p.darkTempCount||0) > 0) tags += '<span class="tag dark">암흑 +'+p.darkTempBonus+'</span>';
+      if(levelOf(p,'storm')>=3) tags += '<span class="tag">회피 '+p.evasionStacks+'</span>';
+      card.innerHTML =
+        '<div class="top"><span class="name">'+p.name+'</span></div>' +
+        '<div class="hp-text">'+Math.max(0,p.hp)+' / '+p.maxHp+'</div>' +
+        '<div class="bar-outer"><div class="bar-inner" style="width:'+(ratio*100)+'%;background:'+barColor(ratio)+';"></div></div>' +
+        '<div class="status-tags">'+(dead?'<span class="tag">쓰러짐</span>':tags)+'</div>';
+      pWrap.appendChild(card);
+    });
+
+    const mWrap = $('monster-status');
+    mWrap.innerHTML = '';
+    const actor = currentActor();
+    state.monsters.forEach(function(m){
+      const dead = m.hp <= 0;
+      const ratio = Math.max(0,m.hp)/m.maxHp;
+      const card = document.createElement('div');
+      card.className = 'status-card'+(dead?' dead':'');
+      let tags = '';
+      if(m.burnActive) tags += '<span class="tag fire">화상</span>';
+      if(m.frozen) tags += '<span class="tag frost">동상</span>';
+      if(m.blinded) tags += '<span class="tag dark">실명</span>';
+      card.innerHTML =
+        '<div class="top"><span class="name">'+m.name+'</span></div>' +
+        '<div class="hp-text">'+Math.max(0,m.hp)+' / '+m.maxHp+'</div>' +
+        '<div class="bar-outer"><div class="bar-inner" style="width:'+(ratio*100)+'%;background:'+(dead?'var(--text-mute)':'var(--fire)')+';"></div></div>' +
+        '<div class="status-tags">'+(dead?'<span class="tag">처치됨</span>':tags)+'</div>';
+      if(!dead && actor && !state.over){
+        const btn = document.createElement('button');
+        btn.className = 'target-btn';
+        btn.textContent = actor.name+' \u2192 공격';
+        btn.addEventListener('click', function(){ chooseAttack(m.id); });
+        card.appendChild(btn);
+      }
+      mWrap.appendChild(card);
+    });
+
+    $('order-label').textContent = '몬스터 행동 순서: ' + (orderedAliveMonsters().map(function(m){return m.name;}).join(' \u2192 ') || '-');
+
+    const actionPanel = $('action-panel');
+    actionPanel.innerHTML = '';
+    if(state.over){
+      actionPanel.innerHTML = '<p class="empty-note">전투가 종료되었습니다.</p>';
+    } else if(actor){
+      const prompt = document.createElement('div');
+      prompt.id = 'actor-prompt';
+      prompt.innerHTML = '지금은 <b>'+actor.name+'</b>의 턴입니다. 몬스터 카드의 [공격] 버튼을 누르거나 아래에서 방어를 선택하세요.';
+      actionPanel.appendChild(prompt);
+      const row = document.createElement('div');
+      row.className = 'row';
+      const defBtn = document.createElement('button');
+      defBtn.textContent = '방어';
+      defBtn.addEventListener('click', chooseDefend);
+      const fleeBtn = document.createElement('button');
+      fleeBtn.textContent = '파티 전체 도주';
+      fleeBtn.addEventListener('click', partyWideFlee);
+      const helpBtn = document.createElement('button');
+      helpBtn.textContent = '구조 요청';
+      helpBtn.addEventListener('click', partyWideHelp);
+      row.appendChild(defBtn); row.appendChild(fleeBtn); row.appendChild(helpBtn);
+      actionPanel.appendChild(row);
+    } else {
+      actionPanel.innerHTML = '<p class="empty-note">몬스터 턴을 진행 중입니다...</p>';
+    }
+  }
+
+  /* ---------- admin password gate ---------- */
+
+  /* 이 비밀번호를 반드시 바꾸고 배포하세요. */
+  const ADMIN_PASSWORD = 'taromilk0701';
+  const ADMIN_SESSION_KEY = 'trial_tower_admin_session';
+
+  function unlockAdmin(){
+    $('admin-gate').style.display = 'none';
+    $('admin-app').style.display = 'block';
+    refreshCharList();
+    refreshArtifactList();
+    refreshPartyTab();
+  }
+
+  $('btn-admin-gate').addEventListener('click', function(){
+    const pw = $('admin-gate-password').value;
+    if(pw === ADMIN_PASSWORD){
+      try{ sessionStorage.setItem(ADMIN_SESSION_KEY, '1'); }catch(e){}
+      unlockAdmin();
+    } else {
+      $('admin-gate-status').textContent = '비밀번호가 올바르지 않습니다.';
+    }
+  });
+
+  $('admin-gate-password').addEventListener('keydown', function(e){
+    if(e.key === 'Enter') $('btn-admin-gate').click();
+  });
+
+  $('btn-open-portal').addEventListener('click', function(){
+    const base = window.location.href.replace(/[^/]*$/, '');
+    window.open(base + 'portal.html', '_blank');
+  });
+
+  let alreadyUnlocked = false;
+  try{ alreadyUnlocked = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1'; }catch(e){}
+  if(alreadyUnlocked){
+    unlockAdmin();
+  }
+
+})();
+</script>
+</body>
+</html>
