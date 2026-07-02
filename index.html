@@ -25,6 +25,10 @@
     --dark:#9d7fe0;
     --danger:#e2564f;
     --success:#6fbf78;
+    --grade-common:#9ca8b3;
+    --grade-uncommon:#5fbf7a;
+    --grade-rare:#5fa8e0;
+    --grade-legendary:#e0b23f;
   }
   *{box-sizing:border-box;}
   body{
@@ -98,15 +102,43 @@
     white-space:nowrap;
   }
   .badge.dim{color:var(--text-mute);border-color:var(--border);}
+  .filter-chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:.6rem;}
+  .filter-chip{
+    font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border-strong);
+    background:var(--panel2);color:var(--text-dim);cursor:pointer;
+  }
+  .filter-chip.active{border-color:var(--chip-color, var(--accent));color:var(--chip-color, var(--accent));background:rgba(217,142,63,.08);}
+  .autocomplete-wrap{position:relative;}
+  .autocomplete-list{
+    position:absolute;top:100%;left:0;right:0;z-index:20;
+    background:var(--panel2);border:1px solid var(--border-strong);border-top:none;
+    border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;display:none;
+  }
+  .autocomplete-list.show{display:block;}
+  .autocomplete-item{padding:9px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);}
+  .autocomplete-item:last-child{border-bottom:none;}
+  .autocomplete-item:hover{background:var(--panel);color:var(--accent);}
+  .autocomplete-item .ac-meta{font-size:11px;color:var(--text-dim);margin-left:6px;}
+  .char-summary-wrap{margin-bottom:8px;}
   .char-summary-card{
     background:var(--panel2);border:1px solid var(--border);border-radius:10px;
-    padding:12px 14px;margin-bottom:8px;cursor:pointer;
+    padding:10px 12px;cursor:pointer;
+    display:flex;align-items:center;gap:12px;
   }
   .char-summary-card:hover{border-color:var(--accent);}
-  .char-summary-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
-  .char-summary-top .char-name{font-size:15px;}
-  .hp-mini{font-size:12px;color:var(--text-dim);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 10px;}
-  .char-summary-actions{margin-top:10px;}
+  .char-summary-thumb{
+    width:42px;height:42px;border-radius:8px;background:var(--panel);
+    border:1px solid var(--border-strong);flex-shrink:0;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Cinzel',serif;font-size:17px;color:var(--accent);
+  }
+  .char-summary-thumb img{width:100%;height:100%;object-fit:cover;}
+  .char-summary-body{flex:1;min-width:0;}
+  .char-summary-top{display:flex;align-items:center;margin-bottom:6px;gap:8px;flex-wrap:wrap;}
+  .char-summary-top .char-name{font-size:14px;}
+  .char-summary-pw{font-size:11px;color:var(--text-mute);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 8px;}
+  .hp-mini{font-size:11px;color:var(--text-dim);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 9px;}
+  .char-summary-actions{margin-top:6px;}
   .party-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.75rem;}
   .slot{
     border:1px dashed var(--border-strong);border-radius:8px;
@@ -145,11 +177,11 @@
     padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;
     text-align:center;
   }
-  .sheet-portrait-box{flex:1.6 1 190px;gap:12px;}
+  .sheet-portrait-box{flex:1.6 1 190px;gap:14px;padding:26px 16px;}
   .sheet-vitals-box{flex:1 1 150px;flex-direction:column;gap:16px;}
   .vitals-row{display:flex;flex-direction:column;align-items:center;width:100%;}
   .portrait-frame{
-    width:128px;height:128px;border-radius:18px;
+    width:168px;height:168px;border-radius:20px;
     border:3px solid var(--accent);
     background:var(--panel2);
     display:flex;align-items:center;justify-content:center;
@@ -163,7 +195,7 @@
     display:flex;align-items:center;justify-content:center;
   }
   .portrait-frame img{width:100%;height:100%;object-fit:cover;}
-  .portrait-placeholder{font-family:'Cinzel',serif;font-size:44px;color:var(--accent);}
+  .portrait-placeholder{font-family:'Cinzel',serif;font-size:56px;color:var(--accent);}
   .char-sheet-name{font-family:'Cinzel',serif;font-size:20px;color:var(--accent);}
   .sheet-box-label{
     font-family:'Cinzel',serif;font-size:15px;font-weight:700;color:var(--text-dim);
@@ -177,15 +209,14 @@
   .help-dot{width:14px;height:14px;border-radius:50%;display:inline-block;border:1.5px solid var(--accent);}
   .help-dot.filled{background:var(--accent);}
 
-  .element-icon-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-  @media(max-width:420px){.element-icon-grid{grid-template-columns:repeat(2,1fr);}}
+  .element-icon-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;}
   .element-icon-tile{
-    border:1px solid var(--border);border-top:3px solid var(--el-color);border-radius:10px;
-    padding:14px 8px 12px;text-align:center;background:var(--panel2);
+    border:1px solid var(--border);border-top:3px solid var(--el-color);border-radius:8px;
+    padding:8px 2px 7px;text-align:center;background:var(--panel2);
   }
-  .element-icon-tile .element-icon{font-size:22px;margin-bottom:8px;filter:grayscale(.15);}
-  .element-icon-tile .element-value{font-size:26px;font-weight:700;color:var(--text);font-family:'Cinzel',serif;}
-  .element-icon-tile .element-name{font-size:11px;color:var(--text-dim);margin-top:4px;}
+  .element-icon-tile .element-icon{font-size:16px;margin-bottom:5px;filter:grayscale(.15);}
+  .element-icon-tile .element-value{font-size:18px;font-weight:700;color:var(--text);font-family:'Cinzel',serif;}
+  .element-icon-tile .element-name{font-size:9px;color:var(--text-dim);margin-top:3px;}
 
   .item-slot[draggable="true"]{cursor:grab;}
   .item-slot[draggable="true"]:active{cursor:grabbing;}
@@ -296,7 +327,8 @@
     </div>
     <div class="panel">
       <div class="panel-head"><h2>등록된 캐릭터</h2><button id="btn-refresh-chars">새로고침</button></div>
-      <p class="footnote" style="margin-bottom:.6rem;">이 목록은 공유 저장소에 보관되어 이 페이지를 여는 누구나 볼 수 있습니다. 실제 로그인 비밀번호는 여기에 표시되지 않습니다.</p>
+      <p class="footnote" style="margin-bottom:.6rem;">이 목록은 공유 저장소에 보관되어 이 페이지를 여는 누구나 볼 수 있습니다.</p>
+      <input type="text" id="char-search" placeholder="캐릭터 이름 검색" style="margin-bottom:.85rem;">
       <div id="char-list"></div>
     </div>
   </div>
@@ -307,7 +339,7 @@
       <div class="panel-head"><h2 id="art-form-title">새 아티팩트 등록</h2></div>
       <label>아티팩트 이름</label>
       <input type="text" id="art-name" placeholder="예: 강철의 검" maxlength="20">
-      <div class="form-row" style="margin-top:.75rem;">
+      <div class="form-row" style="margin-top:.75rem;grid-template-columns:1fr 1fr 90px auto;">
         <div>
           <label>속성</label>
           <select id="art-element">
@@ -317,6 +349,15 @@
             <option value="lightning">전격</option>
             <option value="storm">폭풍</option>
             <option value="dark">암흑</option>
+          </select>
+        </div>
+        <div>
+          <label>등급</label>
+          <select id="art-grade">
+            <option value="common">일반</option>
+            <option value="uncommon">고급</option>
+            <option value="rare">희귀</option>
+            <option value="legendary">전설</option>
           </select>
         </div>
         <div>
@@ -335,6 +376,9 @@
     <div class="panel">
       <div class="panel-head"><h2>등록된 아티팩트</h2><button id="btn-refresh-artifacts">새로고침</button></div>
       <p class="footnote" style="margin-bottom:.6rem;">이 목록도 공유 저장소에 보관되어 이 페이지를 여는 누구나 볼 수 있습니다. 값을 수정하면 이미 지급된 아티팩트에도 즉시 반영되고, 삭제하면 이미 지급된 아티팩트도 모든 캐릭터의 인벤토리에서 함께 삭제됩니다.</p>
+      <input type="text" id="artifact-search" placeholder="아티팩트 이름 검색" style="margin-bottom:.75rem;">
+      <div class="filter-chip-row" id="element-filter-row"></div>
+      <div class="filter-chip-row" id="grade-filter-row"></div>
       <div id="artifact-list"></div>
     </div>
   </div>
@@ -348,34 +392,15 @@
     <div class="panel" id="inv-detail" style="display:none;">
       <div class="panel-head"><h2 id="inv-name"></h2><span class="footnote" id="inv-count"></span></div>
 
-      <div class="form-row">
-        <div>
-          <label>도감에서 지급할 아티팩트</label>
-          <select id="inv-catalog-select"><option value="">아티팩트를 선택하세요</option></select>
+      <div class="form-row" style="grid-template-columns:1fr auto;">
+        <div class="autocomplete-wrap">
+          <label>지급할 아티팩트 검색</label>
+          <input type="text" id="inv-catalog-search" placeholder="아티팩트 이름을 입력하세요" autocomplete="off">
+          <div class="autocomplete-list" id="inv-catalog-suggestions"></div>
         </div>
         <button class="primary" id="btn-add-catalog-item">지급</button>
       </div>
       <p class="footnote" id="inv-catalog-empty-note" style="display:none;">등록된 아티팩트가 없습니다. 아티팩트 도감 탭에서 먼저 등록하세요.</p>
-
-      <label style="margin-top:.5rem;"><input type="checkbox" id="inv-custom-toggle" style="width:auto;margin-right:6px;">도감에 없는 아티팩트 즉석 지급</label>
-      <div class="form-row" id="inv-custom-row" style="display:none;margin-top:.5rem;">
-        <div>
-          <label>속성</label>
-          <select id="inv-element">
-            <option value="physical">물리</option>
-            <option value="fire">화염</option>
-            <option value="frost">빙결</option>
-            <option value="lightning">전격</option>
-            <option value="storm">폭풍</option>
-            <option value="dark">암흑</option>
-          </select>
-        </div>
-        <div>
-          <label>수치 (+N)</label>
-          <input type="number" id="inv-value" value="1" min="1" max="20">
-        </div>
-        <button class="primary" id="btn-add-custom-item">즉석 지급</button>
-      </div>
 
       <div class="item-slots" id="item-slots"></div>
       <div class="panel-head" style="margin-top:.5rem;"><h3>계산된 능력치</h3></div>
@@ -553,6 +578,16 @@ const db = getFirestore(firebaseApp);
   const ELEMENT_COLOR = {};
   ELEMENTS.forEach(function(e){ ELEMENT_NAME[e.key]=e.name; ELEMENT_COLOR[e.key]=e.color; });
 
+  const GRADES = [
+    {key:'common', name:'일반', color:'var(--grade-common)'},
+    {key:'uncommon', name:'고급', color:'var(--grade-uncommon)'},
+    {key:'rare', name:'희귀', color:'var(--grade-rare)'},
+    {key:'legendary', name:'전설', color:'var(--grade-legendary)'}
+  ];
+  const GRADE_NAME = {};
+  const GRADE_COLOR = {};
+  GRADES.forEach(function(g){ GRADE_NAME[g.key]=g.name; GRADE_COLOR[g.key]=g.color; });
+
   const LEVEL_BONUS = {
     physical: {3:8, 6:15, 10:30},
     fire: {6:8},
@@ -721,21 +756,74 @@ const db = getFirestore(firebaseApp);
   let artifactCatalogCache = [];
   let editingArtifactId = null;
 
+  let activeElementFilters = new Set();
+  let activeGradeFilters = new Set();
+
   async function refreshArtifactList(){
     artifactCatalogCache = await loadAllArtifacts();
     allPlayersCache = await loadAllPlayers();
+    buildFilterChips();
+    renderArtifactList();
+  }
+
+  function buildFilterChips(){
+    $('element-filter-row').innerHTML = ELEMENTS.map(function(el){
+      const active = activeElementFilters.has(el.key) ? ' active' : '';
+      return '<button type="button" class="filter-chip'+active+'" data-el-filter="'+el.key+'" style="--chip-color:'+el.color+'">'+el.name+'</button>';
+    }).join('');
+    $('grade-filter-row').innerHTML = GRADES.map(function(g){
+      const active = activeGradeFilters.has(g.key) ? ' active' : '';
+      return '<button type="button" class="filter-chip'+active+'" data-grade-filter="'+g.key+'" style="--chip-color:'+g.color+'">'+g.name+'</button>';
+    }).join('');
+  }
+
+  $('element-filter-row').addEventListener('click', function(e){
+    const key = e.target.getAttribute('data-el-filter');
+    if(!key) return;
+    if(activeElementFilters.has(key)) activeElementFilters.delete(key); else activeElementFilters.add(key);
+    e.target.classList.toggle('active');
+    renderArtifactList();
+  });
+
+  $('grade-filter-row').addEventListener('click', function(e){
+    const key = e.target.getAttribute('data-grade-filter');
+    if(!key) return;
+    if(activeGradeFilters.has(key)) activeGradeFilters.delete(key); else activeGradeFilters.add(key);
+    e.target.classList.toggle('active');
+    renderArtifactList();
+  });
+
+  $('artifact-search').addEventListener('input', renderArtifactList);
+
+  function renderArtifactList(){
     const wrap = $('artifact-list');
     wrap.innerHTML = '';
     if(artifactCatalogCache.length === 0){
       wrap.innerHTML = '<p class="empty-note">등록된 아티팩트가 없습니다.</p>';
       return;
     }
-    artifactCatalogCache.forEach(function(a){
+    const query = ($('artifact-search').value || '').trim().toLowerCase();
+    const filtered = artifactCatalogCache.filter(function(a){
+      if(activeElementFilters.size > 0 && !activeElementFilters.has(a.element)) return false;
+      const grade = a.grade || 'common';
+      if(activeGradeFilters.size > 0 && !activeGradeFilters.has(grade)) return false;
+      if(query && a.name.toLowerCase().indexOf(query) === -1) return false;
+      return true;
+    });
+    if(filtered.length === 0){
+      wrap.innerHTML = '<p class="empty-note">조건에 맞는 아티팩트가 없습니다.</p>';
+      return;
+    }
+    filtered.forEach(function(a){
+      const grade = a.grade || 'common';
       const row = document.createElement('div');
       row.className = 'char-row';
       row.innerHTML =
         '<span class="char-name">'+a.name+'</span>' +
-        '<div class="badges"><span class="badge" style="--el-color:'+ELEMENT_COLOR[a.element]+'">'+ELEMENT_NAME[a.element]+' +'+a.value+'</span></div>' +
+        '<div class="badges">' +
+          '<span class="badge" style="--el-color:'+ELEMENT_COLOR[a.element]+'">'+ELEMENT_NAME[a.element]+' +'+a.value+'</span>' +
+          '<span class="badge" style="--el-color:'+GRADE_COLOR[grade]+'">'+GRADE_NAME[grade]+'</span>' +
+        '</div>' +
         '<span class="footnote" style="flex:1;">'+(a.description||'')+'</span>' +
         '<div class="row"><button data-grant-art="'+a.id+'">플레이어에게 지급</button><button data-edit-art="'+a.id+'">수정</button><button data-del-art="'+a.id+'">삭제</button></div>';
       wrap.appendChild(row);
@@ -831,6 +919,7 @@ const db = getFirestore(firebaseApp);
     editingArtifactId = id;
     $('art-name').value = a.name;
     $('art-element').value = a.element;
+    $('art-grade').value = a.grade || 'common';
     $('art-value').value = a.value;
     $('art-desc').value = a.description || '';
     $('art-form-title').textContent = '"'+a.name+'" 수정 중';
@@ -842,6 +931,7 @@ const db = getFirestore(firebaseApp);
   function cancelArtifactEdit(){
     editingArtifactId = null;
     $('art-name').value = '';
+    $('art-grade').value = 'common';
     $('art-value').value = 1;
     $('art-desc').value = '';
     $('art-form-title').textContent = '새 아티팩트 등록';
@@ -861,6 +951,7 @@ const db = getFirestore(firebaseApp);
       id: editingArtifactId || ('art_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),
       name: name,
       element: $('art-element').value,
+      grade: $('art-grade').value,
       value: Math.max(1, parseInt($('art-value').value,10) || 1),
       description: $('art-desc').value.trim()
     };
@@ -896,45 +987,70 @@ const db = getFirestore(firebaseApp);
 
   async function refreshCharList(){
     allPlayersCache = await loadAllPlayers();
+    renderCharList();
+  }
+
+  function renderCharList(){
     const wrap = $('char-list');
     wrap.innerHTML = '';
+    const query = ($('char-search').value || '').trim().toLowerCase();
+    const filtered = allPlayersCache.filter(function(p){
+      return !query || p.name.toLowerCase().indexOf(query) !== -1;
+    });
     if(allPlayersCache.length === 0){
       wrap.innerHTML = '<p class="empty-note">등록된 캐릭터가 없습니다.</p>';
       return;
     }
-    allPlayersCache.forEach(function(p){
+    if(filtered.length === 0){
+      wrap.innerHTML = '<p class="empty-note">검색 결과가 없습니다.</p>';
+      return;
+    }
+    filtered.forEach(function(p){
+      const outer = document.createElement('div');
+      outer.className = 'char-summary-wrap';
+
       const card = document.createElement('div');
       card.className = 'char-summary-card';
       card.setAttribute('data-goto', p.id);
+      const thumbInner = p.imageUrl
+        ? '<img src="'+p.imageUrl+'">'
+        : (p.name||'?').charAt(0);
       card.innerHTML =
-        '<div class="char-summary-top">' +
-          '<span class="char-name">'+p.name+'</span>' +
-          '<span class="hp-mini">체력 '+currentHpOf(p)+' / '+maxHpOf(p)+'</span>' +
-        '</div>' +
-        '<div class="badges">'+allStatsSummary(p)+'</div>';
-      wrap.appendChild(card);
+        '<div class="char-summary-thumb">'+thumbInner+'</div>' +
+        '<div class="char-summary-body">' +
+          '<div class="char-summary-top">' +
+            '<span class="char-name">'+p.name+'</span>' +
+            '<span class="char-summary-pw">PW '+(p.password||'-')+'</span>' +
+            '<span class="hp-mini">체력 '+currentHpOf(p)+' / '+maxHpOf(p)+'</span>' +
+          '</div>' +
+          '<div class="badges">'+allStatsSummary(p)+'</div>' +
+        '</div>';
+      outer.appendChild(card);
 
       const actions = document.createElement('div');
       actions.className = 'row char-summary-actions';
       actions.innerHTML =
         '<button data-pw="'+p.id+'">비밀번호 재설정</button>' +
         '<button data-del="'+p.id+'">삭제</button>';
-      wrap.appendChild(actions);
+      outer.appendChild(actions);
 
       const pwRow = document.createElement('div');
       pwRow.id = 'pw-row-'+p.id;
       pwRow.className = 'form-row';
       pwRow.style.display = 'none';
-      pwRow.style.marginTop = '-2px';
-      pwRow.style.marginBottom = '14px';
+      pwRow.style.marginTop = '8px';
       pwRow.innerHTML =
         '<div><label>'+p.name+'의 새 비밀번호</label>' +
         '<input type="text" id="pw-input-'+p.id+'" placeholder="비워두면 자동 생성"></div>' +
         '<button data-savepw="'+p.id+'">저장</button>' +
         '<button data-cancelpw="'+p.id+'">취소</button>';
-      wrap.appendChild(pwRow);
+      outer.appendChild(pwRow);
+
+      wrap.appendChild(outer);
     });
   }
+
+  $('char-search').addEventListener('input', renderCharList);
 
   function goToCharacterManage(playerId){
     document.querySelectorAll('.nav button').forEach(function(b){ b.classList.remove('active'); });
@@ -1033,9 +1149,7 @@ const db = getFirestore(firebaseApp);
     else $('inv-detail').style.display = 'none';
   });
 
-  $('inv-custom-toggle').addEventListener('change', function(){
-    $('inv-custom-row').style.display = this.checked ? 'grid' : 'none';
-  });
+  let selectedGrantArtifactId = null;
 
   function currentInvPlayer(){
     const id = $('inv-player-select').value;
@@ -1049,11 +1163,9 @@ const db = getFirestore(firebaseApp);
     $('inv-name').textContent = p.name+'의 인벤토리';
     $('inv-count').textContent = (p.inventory.length)+' / '+INVENTORY_MAX+' 칸 사용 중';
 
-    const catSel = $('inv-catalog-select');
-    catSel.innerHTML = '<option value="">아티팩트를 선택하세요</option>' +
-      artifactCatalogCache.map(function(a){
-        return '<option value="'+a.id+'">'+a.name+' ('+ELEMENT_NAME[a.element]+' +'+a.value+')</option>';
-      }).join('');
+    selectedGrantArtifactId = null;
+    $('inv-catalog-search').value = '';
+    $('inv-catalog-suggestions').classList.remove('show');
     $('inv-catalog-empty-note').style.display = artifactCatalogCache.length === 0 ? 'block' : 'none';
 
     const slotsWrap = $('item-slots');
@@ -1079,7 +1191,6 @@ const db = getFirestore(firebaseApp);
     $('inv-stats').innerHTML = elementSummary(p);
     const full = p.inventory.length >= INVENTORY_MAX;
     $('btn-add-catalog-item').disabled = full;
-    $('btn-add-custom-item').disabled = full;
 
     $('inv-help-count').textContent = '구조 요청 '+helpRequestsOf(p)+' / 2';
 
@@ -1129,13 +1240,57 @@ const db = getFirestore(firebaseApp);
     renderInventoryDetail(p.id);
   });
 
+  $('inv-catalog-search').addEventListener('input', function(){
+    selectedGrantArtifactId = null;
+    const query = this.value.trim().toLowerCase();
+    const box = $('inv-catalog-suggestions');
+    if(!query){
+      box.classList.remove('show');
+      box.innerHTML = '';
+      return;
+    }
+    const matches = artifactCatalogCache.filter(function(a){
+      return a.name.toLowerCase().indexOf(query) !== -1;
+    }).slice(0, 8);
+    if(matches.length === 0){
+      box.innerHTML = '<div class="autocomplete-item" style="color:var(--text-mute);">일치하는 아티팩트가 없습니다.</div>';
+      box.classList.add('show');
+      return;
+    }
+    box.innerHTML = matches.map(function(a){
+      const grade = a.grade || 'common';
+      return '<div class="autocomplete-item" data-pick-art="'+a.id+'">'+a.name+
+        '<span class="ac-meta">'+ELEMENT_NAME[a.element]+' +'+a.value+' \u00b7 '+GRADE_NAME[grade]+'</span></div>';
+    }).join('');
+    box.classList.add('show');
+  });
+
+  $('inv-catalog-suggestions').addEventListener('click', function(e){
+    const id = e.target.closest('[data-pick-art]');
+    if(!id) return;
+    const artId = id.getAttribute('data-pick-art');
+    const art = artifactCatalogCache.find(function(a){ return a.id === artId; });
+    if(!art) return;
+    selectedGrantArtifactId = art.id;
+    $('inv-catalog-search').value = art.name;
+    $('inv-catalog-suggestions').classList.remove('show');
+  });
+
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('.autocomplete-wrap')){
+      $('inv-catalog-suggestions').classList.remove('show');
+    }
+  });
+
   $('btn-add-catalog-item').addEventListener('click', async function(){
     const p = currentInvPlayer();
     if(!p) return;
     if(p.inventory.length >= INVENTORY_MAX) return;
-    const artId = $('inv-catalog-select').value;
-    const art = artifactCatalogCache.find(function(a){ return a.id === artId; });
-    if(!art) return;
+    const art = artifactCatalogCache.find(function(a){ return a.id === selectedGrantArtifactId; });
+    if(!art){
+      $('inv-catalog-search').focus();
+      return;
+    }
     p.inventory.push({
       id: 'item_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
       element: art.element,
@@ -1143,21 +1298,6 @@ const db = getFirestore(firebaseApp);
       name: art.name,
       description: art.description || '',
       sourceArtifactId: art.id
-    });
-    await savePlayer(p);
-    renderInventoryDetail(p.id);
-  });
-
-  $('btn-add-custom-item').addEventListener('click', async function(){
-    const p = currentInvPlayer();
-    if(!p) return;
-    if(p.inventory.length >= INVENTORY_MAX) return;
-    const element = $('inv-element').value;
-    const value = Math.max(1, parseInt($('inv-value').value,10) || 1);
-    p.inventory.push({
-      id: 'item_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
-      element: element,
-      value: value
     });
     await savePlayer(p);
     renderInventoryDetail(p.id);
