@@ -61,7 +61,7 @@
   }
   .panel-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.9rem;flex-wrap:wrap;gap:6px;}
   label{font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px;}
-  input[type=text], input[type=number], select{
+  input[type=text], input[type=number], input[type=password], input[type=file], select{
     width:100%;
     background:var(--bg);
     border:1px solid var(--border-strong);
@@ -72,6 +72,14 @@
     font-size:14px;
   }
   input:focus, select:focus{outline:1px solid var(--accent);}
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus{
+    -webkit-text-fill-color: var(--text);
+    -webkit-box-shadow: 0 0 0px 1000px var(--bg) inset;
+    box-shadow: 0 0 0px 1000px var(--bg) inset;
+    transition: background-color 9999s ease-in-out 0s;
+  }
   button{
     font-family:inherit;
     font-size:13px;
@@ -240,7 +248,6 @@
     margin-bottom:1rem;transition:background .15s,border-color .15s,color .15s;
     display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;
   }
-  #transfer-dropzone.dropzone-hover{border-color:var(--accent);background:rgba(217,142,63,.08);}
   #transfer-dropzone.dropzone-filled{border-style:solid;border-color:var(--accent);justify-content:flex-start;}
   #dropzone-placeholder{color:var(--text-mute);font-size:13px;}
   .drop-chip{
@@ -254,6 +261,22 @@
   }
   .drop-chip .chip-remove:hover{color:var(--danger);}
   .drag-ghost{position:fixed;pointer-events:none;z-index:9999;opacity:.85;}
+  .drop-target-hover-candidate.dropzone-hover{border-color:var(--accent);background:rgba(217,142,63,.08);}
+
+  .sub-nav{display:flex;gap:8px;margin-bottom:1.25rem;}
+  .sub-nav-btn{flex:1;}
+  .sub-nav-btn.active{background:var(--accent);color:#1a1206;border-color:var(--accent);font-weight:600;}
+  .sub-tab{display:none;}
+  .sub-tab.active{display:block;}
+
+  .craft-row{display:flex;align-items:center;justify-content:center;gap:14px;}
+  .craft-slot{
+    flex:1;max-width:150px;min-height:92px;border:2px dashed var(--border-strong);border-radius:10px;
+    display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;color:var(--text-mute);
+    padding:10px;cursor:pointer;
+  }
+  .craft-slot.filled{border-style:solid;border-color:var(--accent);color:var(--text);font-weight:600;font-size:13px;}
+  .craft-symbol{font-size:24px;color:var(--text-mute);font-family:'Cinzel',serif;flex-shrink:0;}
 
   .skill-row{display:grid;grid-template-columns:72px 1fr;gap:14px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
   .skill-row:last-child{border-bottom:none;}
@@ -333,55 +356,89 @@
       <button id="btn-logout">로그아웃</button>
     </div>
 
-    <div class="char-sheet-header">
-      <div class="sheet-box sheet-portrait-box">
-        <div class="portrait-frame" id="portrait-click-area">
-          <img id="pc-portrait" style="display:none;">
-          <div id="pc-portrait-placeholder" class="portrait-placeholder"></div>
+    <div class="sub-nav">
+      <button class="sub-nav-btn active" data-subtab="sub-character">캐릭터</button>
+      <button class="sub-nav-btn" data-subtab="sub-craft">조합</button>
+    </div>
+
+    <div id="sub-character" class="sub-tab active">
+
+      <div class="char-sheet-header">
+        <div class="sheet-box sheet-portrait-box">
+          <div class="portrait-frame" id="portrait-click-area">
+            <img id="pc-portrait" style="display:none;">
+            <div id="pc-portrait-placeholder" class="portrait-placeholder"></div>
+          </div>
+          <input type="file" id="pc-image-input" accept="image/*" style="display:none;">
+          <h1 class="char-sheet-name" id="pc-name"></h1>
         </div>
-        <input type="file" id="pc-image-input" accept="image/*" style="display:none;">
-        <h1 class="char-sheet-name" id="pc-name"></h1>
-      </div>
-      <div class="sheet-box sheet-vitals-box">
-        <div class="vitals-row">
-          <div class="sheet-box-label">체력</div>
-          <div class="hp-visual">
-            <div class="hp-visual-bar"><div class="hp-visual-fill" id="pc-hp-fill"></div></div>
-            <div class="sheet-box-value" id="pc-hp-text"></div>
+        <div class="sheet-box sheet-vitals-box">
+          <div class="vitals-row">
+            <div class="sheet-box-label">체력</div>
+            <div class="hp-visual">
+              <div class="hp-visual-bar"><div class="hp-visual-fill" id="pc-hp-fill"></div></div>
+              <div class="sheet-box-value" id="pc-hp-text"></div>
+            </div>
+          </div>
+          <div class="vitals-row">
+            <div class="sheet-box-label">구조 요청</div>
+            <div class="help-dots-row" id="pc-help-dots"></div>
+            <div class="sheet-box-value" id="pc-help-text" style="font-size:18px;"></div>
           </div>
         </div>
-        <div class="vitals-row">
-          <div class="sheet-box-label">구조 요청</div>
-          <div class="help-dots-row" id="pc-help-dots"></div>
-          <div class="sheet-box-value" id="pc-help-text" style="font-size:18px;"></div>
+      </div>
+      <p class="footnote" id="portrait-status" style="margin:-6px 0 1rem;"></p>
+
+      <div class="panel">
+        <div class="panel-head"><h3>능력치</h3></div>
+        <div class="element-icon-grid" id="pc-element-grid"></div>
+      </div>
+
+      <div class="panel">
+        <h3 style="margin-bottom:.75rem;">보유 아티팩트</h3>
+        <div class="badges" id="pc-level-row"></div>
+        <div id="pc-skills-list"></div>
+        <div class="item-slots" id="pc-slots"></div>
+      </div>
+
+      <div class="panel">
+        <h3 style="margin-bottom:.75rem;">보유 아이템</h3>
+        <div class="item-slots" id="pc-item-slots"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>양도</h3></div>
+        <div id="transfer-dropzone" class="drop-target-hover-candidate" data-drop-role="transfer">
+          <span id="dropzone-placeholder">아티팩트나 아이템을 여기로 끌어다 놓으세요. 여러 개를 한 번에 놓을 수 있어요.</span>
         </div>
+        <label>받을 캐릭터 이름</label>
+        <input type="text" id="transfer-target-input" placeholder="캐릭터 이름을 입력하세요">
+        <button class="primary wide" id="btn-transfer" style="margin-top:.85rem;">양도하기</button>
+        <p class="footnote" id="transfer-status"></p>
       </div>
-    </div>
-    <p class="footnote" id="portrait-status" style="margin:-6px 0 1rem;"></p>
 
-    <div class="panel">
-      <div class="panel-head"><h3>능력치</h3></div>
-      <div class="element-icon-grid" id="pc-element-grid"></div>
     </div>
 
-    <div class="panel">
-      <h3 style="margin-bottom:.75rem;">보유 아티팩트</h3>
-      <div class="badges" id="pc-level-row"></div>
-      <div id="pc-skills-list"></div>
-      <p class="footnote" style="margin-bottom:.6rem;">아티팩트를 아래 양도 칸으로 끌어다 놓으세요. 여러 개를 한 번에 놓을 수 있어요.</p>
-      <div class="item-slots" id="pc-slots"></div>
-    </div>
+    <div id="sub-craft" class="sub-tab">
 
-    <div class="panel">
-      <div class="panel-head"><h3>아티팩트 양도</h3></div>
-      <div id="transfer-dropzone">
-        <span id="dropzone-placeholder">아티팩트를 여기로 끌어다 놓으세요</span>
+      <div class="panel">
+        <div class="panel-head"><h3>아이템 조합</h3></div>
+        <div class="craft-row">
+          <div class="craft-slot drop-target-hover-candidate" data-drop-role="craft-0" id="craft-slot-0">재료 1</div>
+          <div class="craft-symbol">+</div>
+          <div class="craft-slot drop-target-hover-candidate" data-drop-role="craft-1" id="craft-slot-1">재료 2</div>
+        </div>
+        <button class="primary wide" id="btn-craft" style="margin-top:1rem;">조합하기</button>
+        <p class="footnote" id="craft-status"></p>
       </div>
-      <label>받을 캐릭터 이름</label>
-      <input type="text" id="transfer-target-input" placeholder="캐릭터 이름을 입력하세요">
-      <button class="primary wide" id="btn-transfer" style="margin-top:.85rem;">양도하기</button>
-      <p class="footnote" id="transfer-status"></p>
+
+      <div class="panel">
+        <h3 style="margin-bottom:.6rem;">보유 아이템</h3>
+        <div class="item-slots" id="craft-item-slots"></div>
+      </div>
+
     </div>
+
   </div>
 
 </div>
@@ -579,8 +636,28 @@ const db = getFirestore(firebaseApp);
     try{ await deleteDoc(doc(db, 'artifacts', id)); }catch(e){ console.error('deleteArtifact 실패:', e); }
   }
 
+  async function loadAllItemCatalog(){
+    try{
+      const snap = await getDocs(collection(db, 'items'));
+      const items = [];
+      snap.forEach(function(d){ items.push(d.data()); });
+      return items;
+    }catch(e){ console.error('loadAllItemCatalog 실패:', e); return []; }
+  }
+
+  async function loadAllRecipes(){
+    try{
+      const snap = await getDocs(collection(db, 'recipes'));
+      const recipes = [];
+      snap.forEach(function(d){ recipes.push(d.data()); });
+      return recipes;
+    }catch(e){ console.error('loadAllRecipes 실패:', e); return []; }
+  }
+
   let artifactCatalogCache = [];
   let allPlayersCache = [];
+  let itemCatalogCache = [];
+  let recipesCache = [];
 
   /* 인벤토리 아이템의 "실제 값"을 도감에서 실시간으로 가져온다. */
   function resolveItem(item){
@@ -591,6 +668,15 @@ const db = getFirestore(firebaseApp);
       }
     }
     return { element: item.element, value: item.value, name: item.name||'', description: item.description||'', grade: item.grade||'common' };
+  }
+
+  /* 일반 아이템(비-아티팩트)의 실제 값을 아이템 도감에서 실시간으로 가져온다. */
+  function resolveGeneralItem(item){
+    if(item.sourceItemId){
+      const it = itemCatalogCache.find(function(a){ return a.id === item.sourceItemId; });
+      if(it) return { name: it.name, description: it.description||'' };
+    }
+    return { name: item.name||'', description: item.description||'' };
   }
 
   /* ============ 플레이어 화면 (portal mode) ============ */
@@ -614,10 +700,13 @@ const db = getFirestore(firebaseApp);
     sessionPlayerId = match.id;
     try{ localStorage.setItem(SESSION_KEY, match.id); }catch(e){}
     artifactCatalogCache = await loadAllArtifacts();
+    itemCatalogCache = await loadAllItemCatalog();
+    recipesCache = await loadAllRecipes();
     $('login-status').textContent = '';
     $('login-view').style.display = 'none';
     $('char-view').style.display = 'block';
     renderPortalChar();
+    renderCraftTab();
   });
 
   $('btn-logout').addEventListener('click', function(){
@@ -641,18 +730,31 @@ const db = getFirestore(firebaseApp);
     }
     sessionPlayerId = match.id;
     artifactCatalogCache = await loadAllArtifacts();
+    itemCatalogCache = await loadAllItemCatalog();
+    recipesCache = await loadAllRecipes();
     $('login-view').style.display = 'none';
     $('char-view').style.display = 'block';
     renderPortalChar();
+    renderCraftTab();
   }
 
   function currentPortalPlayer(){
     return allPlayersCache.find(function(p){ return p.id === sessionPlayerId; });
   }
 
+  document.querySelectorAll('.sub-nav-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.sub-nav-btn').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.sub-tab').forEach(function(t){ t.classList.remove('active'); });
+      btn.classList.add('active');
+      $(btn.getAttribute('data-subtab')).classList.add('active');
+    });
+  });
+
   let pendingPortraitDataUrl = null;
   let dragState = null;
-  let stagedTransferItemIds = [];
+  let stagedTransferEntries = [];
+  let craftSlots = [null, null];
 
   function renderPortalChar(){
     const p = currentPortalPlayer();
@@ -714,8 +816,11 @@ const db = getFirestore(firebaseApp);
     });
     $('pc-skills-list').innerHTML = skillsHtml || '<p class="empty-note" style="margin-bottom:.6rem;">아직 해금된 스킬이 없습니다.</p>';
 
-    stagedTransferItemIds = stagedTransferItemIds.filter(function(id){
-      return p.inventory.some(function(i){ return i.id === id; });
+    if(!p.items) p.items = [];
+
+    stagedTransferEntries = stagedTransferEntries.filter(function(entry){
+      if(entry.type === 'artifact') return p.inventory.some(function(i){ return i.id === entry.id; });
+      return p.items.some(function(i){ return i.id === entry.id; });
     });
 
     const slotsWrap = $('pc-slots');
@@ -731,7 +836,7 @@ const db = getFirestore(firebaseApp);
           '<div class="el-info"><div class="el-name" style="color:'+ELEMENT_COLOR[r.element]+'">'+(r.name || ELEMENT_NAME[r.element])+'</div>' +
           '<div class="el-value">'+ELEMENT_NAME[r.element]+' +'+r.value+'</div>' +
           '<div class="el-grade" style="color:'+GRADE_COLOR[r.grade]+'">'+GRADE_NAME[r.grade]+'</div></div>';
-        attachDragHandlers(slot, item.id);
+        makeItemDraggable(slot, {type:'artifact', id:item.id});
       } else {
         slot.className = 'item-slot empty';
         slot.textContent = '빈 슬롯';
@@ -739,103 +844,153 @@ const db = getFirestore(firebaseApp);
       slotsWrap.appendChild(slot);
     }
 
+    const itemSlotsWrap = $('pc-item-slots');
+    itemSlotsWrap.innerHTML = '';
+    for(let i=0;i<INVENTORY_MAX;i++){
+      const item = p.items[i];
+      const slot = document.createElement('div');
+      if(item){
+        const r = resolveGeneralItem(item);
+        slot.className = 'item-slot';
+        slot.innerHTML = '<div class="el-info"><div class="el-name">'+(r.name||'이름 없음')+'</div></div>';
+        makeItemDraggable(slot, {type:'item', id:item.id});
+      } else {
+        slot.className = 'item-slot empty';
+        slot.textContent = '빈 슬롯';
+      }
+      itemSlotsWrap.appendChild(slot);
+    }
+
     $('transfer-status').textContent = '';
     $('portrait-status').textContent = '';
     renderDropzoneChips();
   }
 
-  /* ---- drag & drop / touch transfer (multi-item staging) ---- */
+  /* ---- drag & drop / touch transfer (artifacts + items, multi-select, multi-target) ---- */
 
   function renderDropzoneChips(){
     const p = currentPortalPlayer();
     const dz = $('transfer-dropzone');
-    if(!p || stagedTransferItemIds.length === 0){
-      dz.innerHTML = '<span id="dropzone-placeholder">아티팩트를 여기로 끌어다 놓으세요</span>';
+    if(!p || stagedTransferEntries.length === 0){
+      dz.innerHTML = '<span id="dropzone-placeholder">아티팩트나 아이템을 여기로 끌어다 놓으세요. 여러 개를 한 번에 놓을 수 있어요.</span>';
       dz.classList.remove('dropzone-filled');
       return;
     }
     dz.classList.add('dropzone-filled');
-    dz.innerHTML = stagedTransferItemIds.map(function(id){
-      const item = p.inventory.find(function(i){ return i.id === id; });
-      if(!item) return '';
-      const r = resolveItem(item);
-      return '<span class="drop-chip" style="--el-color:'+ELEMENT_COLOR[r.element]+'">'+(r.name || ELEMENT_NAME[r.element])+
-        '<button type="button" class="chip-remove" data-unstage="'+id+'">\u00d7</button></span>';
+    dz.innerHTML = stagedTransferEntries.map(function(entry){
+      let label = '';
+      if(entry.type === 'artifact'){
+        const item = p.inventory.find(function(i){ return i.id === entry.id; });
+        if(!item) return '';
+        const r = resolveItem(item);
+        label = r.name || ELEMENT_NAME[r.element];
+      } else {
+        const item = (p.items||[]).find(function(i){ return i.id === entry.id; });
+        if(!item) return '';
+        const r = resolveGeneralItem(item);
+        label = r.name || '아이템';
+      }
+      return '<span class="drop-chip">'+label+
+        '<button type="button" class="chip-remove" data-unstage-type="'+entry.type+'" data-unstage-id="'+entry.id+'">\u00d7</button></span>';
     }).join('');
   }
 
   $('transfer-dropzone').addEventListener('click', function(e){
-    const id = e.target.getAttribute('data-unstage');
+    const type = e.target.getAttribute('data-unstage-type');
+    const id = e.target.getAttribute('data-unstage-id');
     if(!id) return;
-    stagedTransferItemIds = stagedTransferItemIds.filter(function(x){ return x !== id; });
+    stagedTransferEntries = stagedTransferEntries.filter(function(x){ return !(x.type===type && x.id===id); });
     renderDropzoneChips();
   });
 
-  function stageItemForTransfer(itemId){
-    if(stagedTransferItemIds.indexOf(itemId) === -1){
-      stagedTransferItemIds.push(itemId);
-    }
+  function stageItemForTransfer(type, id){
+    const exists = stagedTransferEntries.some(function(x){ return x.type===type && x.id===id; });
+    if(!exists) stagedTransferEntries.push({type:type, id:id});
     renderDropzoneChips();
   }
 
-  function attachDragHandlers(slot, itemId){
-    slot.setAttribute('draggable', 'true');
+  function handleDropOnTarget(zoneEl, payload){
+    const role = zoneEl.getAttribute('data-drop-role');
+    if(role === 'transfer'){
+      stageItemForTransfer(payload.type, payload.id);
+    } else if(role === 'craft-0'){
+      setCraftSlot(0, payload);
+    } else if(role === 'craft-1'){
+      setCraftSlot(1, payload);
+    }
+  }
 
-    slot.addEventListener('dragstart', function(e){
-      e.dataTransfer.setData('text/plain', itemId);
+  function findDropTargetAtPoint(x, y){
+    const candidates = document.querySelectorAll('.drop-target-hover-candidate');
+    for(const el of candidates){
+      const rect = el.getBoundingClientRect();
+      if(rect.width === 0 && rect.height === 0) continue;
+      if(x>=rect.left && x<=rect.right && y>=rect.top && y<=rect.bottom) return el;
+    }
+    return null;
+  }
+
+  function makeItemDraggable(el, payload){
+    el.setAttribute('draggable', 'true');
+    const payloadStr = JSON.stringify(payload);
+
+    el.addEventListener('dragstart', function(e){
+      e.dataTransfer.setData('text/plain', payloadStr);
       e.dataTransfer.effectAllowed = 'move';
     });
 
-    slot.addEventListener('touchstart', function(e){
+    el.addEventListener('touchstart', function(e){
       const touch = e.touches[0];
-      const ghost = slot.cloneNode(true);
+      const ghost = el.cloneNode(true);
       ghost.classList.add('drag-ghost');
-      ghost.style.width = slot.offsetWidth+'px';
-      ghost.style.left = (touch.clientX - slot.offsetWidth/2)+'px';
-      ghost.style.top = (touch.clientY - slot.offsetHeight/2)+'px';
+      ghost.style.width = el.offsetWidth+'px';
+      ghost.style.left = (touch.clientX - el.offsetWidth/2)+'px';
+      ghost.style.top = (touch.clientY - el.offsetHeight/2)+'px';
       document.body.appendChild(ghost);
-      dragState = { itemId: itemId, ghostEl: ghost };
+      dragState = { payload: payload, ghostEl: ghost };
     }, {passive:true});
 
-    slot.addEventListener('touchmove', function(e){
+    el.addEventListener('touchmove', function(e){
       if(!dragState) return;
       const touch = e.touches[0];
-      dragState.ghostEl.style.left = (touch.clientX - slot.offsetWidth/2)+'px';
-      dragState.ghostEl.style.top = (touch.clientY - slot.offsetHeight/2)+'px';
-      const dz = $('transfer-dropzone');
-      const rect = dz.getBoundingClientRect();
-      const over = touch.clientX>=rect.left && touch.clientX<=rect.right && touch.clientY>=rect.top && touch.clientY<=rect.bottom;
-      dz.classList.toggle('dropzone-hover', over);
+      dragState.ghostEl.style.left = (touch.clientX - el.offsetWidth/2)+'px';
+      dragState.ghostEl.style.top = (touch.clientY - el.offsetHeight/2)+'px';
+      document.querySelectorAll('.drop-target-hover-candidate').forEach(function(z){
+        const rect = z.getBoundingClientRect();
+        const over = rect.width>0 && touch.clientX>=rect.left && touch.clientX<=rect.right && touch.clientY>=rect.top && touch.clientY<=rect.bottom;
+        z.classList.toggle('dropzone-hover', over);
+      });
     }, {passive:true});
 
-    slot.addEventListener('touchend', function(e){
+    el.addEventListener('touchend', function(e){
       if(!dragState) return;
       const touch = e.changedTouches[0];
-      const dz = $('transfer-dropzone');
-      const rect = dz.getBoundingClientRect();
-      const over = touch.clientX>=rect.left && touch.clientX<=rect.right && touch.clientY>=rect.top && touch.clientY<=rect.bottom;
-      dz.classList.remove('dropzone-hover');
-      if(over) stageItemForTransfer(dragState.itemId);
+      const target = findDropTargetAtPoint(touch.clientX, touch.clientY);
+      document.querySelectorAll('.drop-target-hover-candidate').forEach(function(z){ z.classList.remove('dropzone-hover'); });
+      if(target) handleDropOnTarget(target, dragState.payload);
       dragState.ghostEl.remove();
       dragState = null;
     });
 
-    slot.addEventListener('touchcancel', function(){
+    el.addEventListener('touchcancel', function(){
       if(dragState){ dragState.ghostEl.remove(); dragState = null; }
     });
   }
 
-  (function initDropzone(){
-    const dz = $('transfer-dropzone');
-    dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.classList.add('dropzone-hover'); });
-    dz.addEventListener('dragleave', function(){ dz.classList.remove('dropzone-hover'); });
-    dz.addEventListener('drop', function(e){
+  document.querySelectorAll('.drop-target-hover-candidate').forEach(function(zone){
+    zone.addEventListener('dragover', function(e){ e.preventDefault(); zone.classList.add('dropzone-hover'); });
+    zone.addEventListener('dragleave', function(){ zone.classList.remove('dropzone-hover'); });
+    zone.addEventListener('drop', function(e){
       e.preventDefault();
-      dz.classList.remove('dropzone-hover');
-      const itemId = e.dataTransfer.getData('text/plain');
-      if(itemId) stageItemForTransfer(itemId);
+      zone.classList.remove('dropzone-hover');
+      const raw = e.dataTransfer.getData('text/plain');
+      if(!raw) return;
+      try{
+        const payload = JSON.parse(raw);
+        handleDropOnTarget(zone, payload);
+      }catch(err){}
     });
-  })();
+  });
 
   /* ---- portrait upload (click portrait to change) ---- */
 
@@ -878,36 +1033,54 @@ const db = getFirestore(firebaseApp);
     const p = currentPortalPlayer();
     if(!p) return;
     const targetName = $('transfer-target-input').value.trim();
-    if(stagedTransferItemIds.length === 0 || !targetName){
-      $('transfer-status').textContent = '양도할 아티팩트를 끌어다 놓고, 받을 캐릭터 이름을 입력하세요.';
+    if(stagedTransferEntries.length === 0 || !targetName){
+      $('transfer-status').textContent = '양도할 아티팩트나 아이템을 끌어다 놓고, 받을 캐릭터 이름을 입력하세요.';
       return;
     }
     allPlayersCache = await loadAllPlayers();
     const freshSelf = allPlayersCache.find(function(x){ return x.id === p.id; });
     const target = allPlayersCache.find(function(x){ return x.name === targetName; });
     if(!freshSelf) return;
+    if(!freshSelf.items) freshSelf.items = [];
     if(!target){
       $('transfer-status').textContent = '"'+targetName+'" 이름의 캐릭터를 찾을 수 없습니다.';
       return;
     }
+    if(!target.items) target.items = [];
     if(target.id === freshSelf.id){
       $('transfer-status').textContent = '자기 자신에게는 양도할 수 없습니다.';
       return;
     }
-    const itemsToMove = freshSelf.inventory.filter(function(i){ return stagedTransferItemIds.indexOf(i.id) !== -1; });
-    if(itemsToMove.length === 0){
-      $('transfer-status').textContent = '이미 처리된 아티팩트입니다. 새로고침 후 다시 시도하세요.';
-      stagedTransferItemIds = [];
+
+    const artifactIds = stagedTransferEntries.filter(function(e){ return e.type==='artifact'; }).map(function(e){ return e.id; });
+    const itemIds = stagedTransferEntries.filter(function(e){ return e.type==='item'; }).map(function(e){ return e.id; });
+
+    const artifactsToMove = freshSelf.inventory.filter(function(i){ return artifactIds.indexOf(i.id) !== -1; });
+    const itemsToMove = freshSelf.items.filter(function(i){ return itemIds.indexOf(i.id) !== -1; });
+
+    if(artifactsToMove.length === 0 && itemsToMove.length === 0){
+      $('transfer-status').textContent = '이미 처리된 아티팩트/아이템입니다. 새로고침 후 다시 시도하세요.';
+      stagedTransferEntries = [];
       renderPortalChar();
       return;
     }
-    if(target.inventory.length + itemsToMove.length > INVENTORY_MAX){
-      $('transfer-status').textContent = target.name+'의 인벤토리 공간이 부족합니다. (남은 칸: '+(INVENTORY_MAX-target.inventory.length)+')';
+    if(target.inventory.length + artifactsToMove.length > INVENTORY_MAX){
+      $('transfer-status').textContent = target.name+'의 아티팩트 인벤토리 공간이 부족합니다. (남은 칸: '+(INVENTORY_MAX-target.inventory.length)+')';
       return;
     }
-    const labels = itemsToMove.map(function(i){ const r = resolveItem(i); return r.name || ELEMENT_NAME[r.element]; });
-    freshSelf.inventory = freshSelf.inventory.filter(function(i){ return stagedTransferItemIds.indexOf(i.id) === -1; });
-    target.inventory = target.inventory.concat(itemsToMove);
+    if(target.items.length + itemsToMove.length > INVENTORY_MAX){
+      $('transfer-status').textContent = target.name+'의 아이템 인벤토리 공간이 부족합니다. (남은 칸: '+(INVENTORY_MAX-target.items.length)+')';
+      return;
+    }
+
+    const labels = artifactsToMove.map(function(i){ const r = resolveItem(i); return r.name || ELEMENT_NAME[r.element]; })
+      .concat(itemsToMove.map(function(i){ const r = resolveGeneralItem(i); return r.name || '아이템'; }));
+
+    freshSelf.inventory = freshSelf.inventory.filter(function(i){ return artifactIds.indexOf(i.id) === -1; });
+    freshSelf.items = freshSelf.items.filter(function(i){ return itemIds.indexOf(i.id) === -1; });
+    target.inventory = target.inventory.concat(artifactsToMove);
+    target.items = target.items.concat(itemsToMove);
+
     await savePlayer(freshSelf);
     await savePlayer(target);
     allPlayersCache = allPlayersCache.map(function(x){
@@ -915,9 +1088,111 @@ const db = getFirestore(firebaseApp);
       if(x.id === target.id) return target;
       return x;
     });
-    stagedTransferItemIds = [];
+    stagedTransferEntries = [];
     $('transfer-target-input').value = '';
     $('transfer-status').textContent = labels.join(', ')+'을(를) '+target.name+'에게 양도했습니다.';
+    renderPortalChar();
+    renderCraftTab();
+  });
+
+  /* ---- crafting (item + item = item) ---- */
+
+  function setCraftSlot(index, payload){
+    if(payload.type !== 'item') return;
+    const other = index===0 ? craftSlots[1] : craftSlots[0];
+    if(other === payload.id) return;
+    craftSlots[index] = payload.id;
+    renderCraftSlotsDisplay();
+  }
+
+  function renderCraftSlotsDisplay(){
+    const p = currentPortalPlayer();
+    [0,1].forEach(function(idx){
+      const el = $('craft-slot-'+idx);
+      const itemId = craftSlots[idx];
+      if(itemId && p){
+        const item = (p.items||[]).find(function(i){ return i.id === itemId; });
+        if(item){
+          const r = resolveGeneralItem(item);
+          el.className = 'craft-slot filled drop-target-hover-candidate';
+          el.textContent = r.name || '아이템';
+          return;
+        }
+      }
+      el.className = 'craft-slot drop-target-hover-candidate';
+      el.textContent = '재료 '+(idx+1);
+    });
+  }
+
+  $('craft-slot-0').addEventListener('click', function(){ craftSlots[0] = null; renderCraftSlotsDisplay(); });
+  $('craft-slot-1').addEventListener('click', function(){ craftSlots[1] = null; renderCraftSlotsDisplay(); });
+
+  function renderCraftTab(){
+    const p = currentPortalPlayer();
+    if(!p) return;
+    if(!p.items) p.items = [];
+    renderCraftSlotsDisplay();
+    const wrap = $('craft-item-slots');
+    wrap.innerHTML = '';
+    for(let i=0;i<INVENTORY_MAX;i++){
+      const item = p.items[i];
+      const slot = document.createElement('div');
+      if(item){
+        const r = resolveGeneralItem(item);
+        slot.className = 'item-slot';
+        slot.innerHTML = '<div class="el-info"><div class="el-name">'+(r.name||'이름 없음')+'</div></div>';
+        makeItemDraggable(slot, {type:'item', id:item.id});
+      } else {
+        slot.className = 'item-slot empty';
+        slot.textContent = '빈 슬롯';
+      }
+      wrap.appendChild(slot);
+    }
+    $('craft-status').textContent = '';
+  }
+
+  $('btn-craft').addEventListener('click', async function(){
+    const p = currentPortalPlayer();
+    if(!p) return;
+    if(!craftSlots[0] || !craftSlots[1]){
+      $('craft-status').textContent = '재료 두 개를 모두 놓아주세요.';
+      return;
+    }
+    const item0 = (p.items||[]).find(function(i){ return i.id === craftSlots[0]; });
+    const item1 = (p.items||[]).find(function(i){ return i.id === craftSlots[1]; });
+    if(!item0 || !item1){
+      $('craft-status').textContent = '재료를 다시 확인해주세요.';
+      craftSlots = [null,null];
+      renderCraftTab();
+      return;
+    }
+    const catA = item0.sourceItemId;
+    const catB = item1.sourceItemId;
+    recipesCache = await loadAllRecipes();
+    const match = recipesCache.find(function(r){
+      return (r.itemAId===catA && r.itemBId===catB) || (r.itemAId===catB && r.itemBId===catA);
+    });
+    if(!match){
+      $('craft-status').textContent = '조합할 수 있는 레시피가 없습니다.';
+      return;
+    }
+    itemCatalogCache = await loadAllItemCatalog();
+    const resultCatalog = itemCatalogCache.find(function(x){ return x.id === match.resultItemId; });
+    if(!resultCatalog){
+      $('craft-status').textContent = '결과 아이템 정보를 찾을 수 없습니다.';
+      return;
+    }
+    p.items = (p.items||[]).filter(function(i){ return i.id !== craftSlots[0] && i.id !== craftSlots[1]; });
+    p.items.push({
+      id: 'item_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+      name: resultCatalog.name,
+      description: resultCatalog.description || '',
+      sourceItemId: resultCatalog.id
+    });
+    await savePlayer(p);
+    craftSlots = [null, null];
+    $('craft-status').textContent = '"'+resultCatalog.name+'"을(를) 조합했습니다!';
+    renderCraftTab();
     renderPortalChar();
   });
 

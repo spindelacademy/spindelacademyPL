@@ -61,7 +61,7 @@
   }
   .panel-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.9rem;flex-wrap:wrap;gap:6px;}
   label{font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px;}
-  input[type=text], input[type=number], select{
+  input[type=text], input[type=number], input[type=password], input[type=file], select{
     width:100%;
     background:var(--bg);
     border:1px solid var(--border-strong);
@@ -72,6 +72,14 @@
     font-size:14px;
   }
   input:focus, select:focus{outline:1px solid var(--accent);}
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus{
+    -webkit-text-fill-color: var(--text);
+    -webkit-box-shadow: 0 0 0px 1000px var(--bg) inset;
+    box-shadow: 0 0 0px 1000px var(--bg) inset;
+    transition: background-color 9999s ease-in-out 0s;
+  }
   button{
     font-family:inherit;
     font-size:13px;
@@ -321,6 +329,7 @@
   <div class="nav">
     <button class="active" data-tab="tab-characters">캐릭터 목록</button>
     <button data-tab="tab-artifacts">아티팩트 도감</button>
+    <button data-tab="tab-items">아이템 도감</button>
     <button data-tab="tab-inventory">캐릭터 관리</button>
     <button data-tab="tab-battle">전투 시뮬레이터</button>
   </div>
@@ -394,6 +403,28 @@
     </div>
   </div>
 
+  <!-- ================= TAB: 아이템 도감 ================= -->
+  <div id="tab-items" class="tab">
+    <div class="panel">
+      <div class="panel-head"><h2 id="item-form-title">새 아이템 등록</h2></div>
+      <label>아이템 이름</label>
+      <input type="text" id="item-name" placeholder="예: 마른 약초" maxlength="20">
+      <label style="margin-top:.75rem;">설명 (선택)</label>
+      <input type="text" id="item-desc" placeholder="아이템에 대한 짧은 설명">
+      <div class="row" style="margin-top:.75rem;">
+        <button class="primary" id="btn-save-item">도감에 등록</button>
+        <button id="btn-cancel-edit-item" style="display:none;">수정 취소</button>
+      </div>
+      <p class="footnote" id="item-save-status" style="margin-top:.5rem;"></p>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h2>등록된 아이템</h2><button id="btn-refresh-items">새로고침</button></div>
+      <p class="footnote" style="margin-bottom:.6rem;">이 목록도 공유 저장소에 보관됩니다. 삭제하면 이미 지급된 아이템도 모든 캐릭터의 아이템 칸에서 함께 삭제됩니다. 조합 레시피는 추후 별도로 추가됩니다.</p>
+      <input type="text" id="item-search" placeholder="아이템 이름 검색" style="margin-bottom:.75rem;">
+      <div id="item-catalog-list"></div>
+    </div>
+  </div>
+
   <!-- ================= TAB: 아이템 창 관리 ================= -->
   <div id="tab-inventory" class="tab">
     <div class="panel">
@@ -416,6 +447,18 @@
       <div class="item-slots" id="item-slots"></div>
       <div class="panel-head" style="margin-top:.5rem;"><h3>계산된 능력치</h3></div>
       <div class="badges" id="inv-stats"></div>
+
+      <div class="panel-head" style="margin-top:1rem;"><h3>보유 아이템</h3></div>
+      <div class="form-row" style="grid-template-columns:1fr auto;">
+        <div class="autocomplete-wrap">
+          <label>지급할 아이템 검색</label>
+          <input type="text" id="inv-item-search" placeholder="아이템 이름을 입력하세요" autocomplete="off">
+          <div class="autocomplete-list" id="inv-item-suggestions"></div>
+        </div>
+        <button class="primary" id="btn-add-item">지급</button>
+      </div>
+      <p class="footnote" id="inv-item-empty-note" style="display:none;">등록된 아이템이 없습니다. 아이템 도감 탭에서 먼저 등록하세요.</p>
+      <div class="item-slots" id="inv-item-slots"></div>
 
       <div class="panel-head" style="margin-top:1rem;"><h3>구조 요청 잔여 횟수</h3></div>
       <div class="row" style="align-items:center;">
@@ -674,6 +717,24 @@ const db = getFirestore(firebaseApp);
     try{ await deleteDoc(doc(db, 'artifacts', id)); }catch(e){ console.error('deleteArtifact 실패:', e); }
   }
 
+  async function saveItemCatalog(item){
+    try{
+      await setDoc(doc(db, 'items', item.id), item);
+      return true;
+    }catch(e){ console.error('saveItemCatalog 실패:', e); return false; }
+  }
+  async function loadAllItemCatalog(){
+    try{
+      const snap = await getDocs(collection(db, 'items'));
+      const items = [];
+      snap.forEach(function(d){ items.push(d.data()); });
+      return items;
+    }catch(e){ console.error('loadAllItemCatalog 실패:', e); return []; }
+  }
+  async function deleteItemCatalogFromStorage(id){
+    try{ await deleteDoc(doc(db, 'items', id)); }catch(e){ console.error('deleteItemCatalog 실패:', e); }
+  }
+
   /* ---------- nav ---------- */
 
   document.querySelectorAll('.nav button').forEach(function(btn){
@@ -683,6 +744,7 @@ const db = getFirestore(firebaseApp);
       btn.classList.add('active');
       $(btn.getAttribute('data-tab')).classList.add('active');
       if(btn.getAttribute('data-tab') === 'tab-artifacts') refreshArtifactList();
+      if(btn.getAttribute('data-tab') === 'tab-items') refreshItemCatalogList();
       if(btn.getAttribute('data-tab') === 'tab-inventory') refreshInventoryTab();
       if(btn.getAttribute('data-tab') === 'tab-battle') refreshPartyTab();
     });
@@ -918,6 +980,184 @@ const db = getFirestore(firebaseApp);
     return { element: item.element, value: item.value, name: item.name||'', description: item.description||'', grade: item.grade||'common' };
   }
 
+  let itemCatalogCache = [];
+
+  function resolveGeneralItem(item){
+    if(item.sourceItemId){
+      const it = itemCatalogCache.find(function(a){ return a.id === item.sourceItemId; });
+      if(it) return { name: it.name, description: it.description||'' };
+    }
+    return { name: item.name||'', description: item.description||'' };
+  }
+
+  /* ============ TAB: 아이템 도감 ============ */
+
+  let editingItemCatalogId = null;
+
+  async function refreshItemCatalogList(){
+    itemCatalogCache = await loadAllItemCatalog();
+    allPlayersCache = await loadAllPlayers();
+    renderItemCatalogList();
+  }
+
+  function renderItemCatalogList(){
+    const wrap = $('item-catalog-list');
+    wrap.innerHTML = '';
+    if(itemCatalogCache.length === 0){
+      wrap.innerHTML = '<p class="empty-note">등록된 아이템이 없습니다.</p>';
+      return;
+    }
+    const query = ($('item-search').value || '').trim().toLowerCase();
+    const filtered = itemCatalogCache.filter(function(it){
+      return !query || it.name.toLowerCase().indexOf(query) !== -1;
+    });
+    if(filtered.length === 0){
+      wrap.innerHTML = '<p class="empty-note">검색 결과가 없습니다.</p>';
+      return;
+    }
+    filtered.forEach(function(it){
+      const row = document.createElement('div');
+      row.className = 'char-row';
+      row.innerHTML =
+        '<span class="char-name">'+it.name+'</span>' +
+        '<span class="footnote" style="flex:1;">'+(it.description||'')+'</span>' +
+        '<div class="row"><button data-grant-item="'+it.id+'">플레이어에게 지급</button><button data-edit-item="'+it.id+'">수정</button><button data-del-item="'+it.id+'">삭제</button></div>';
+      wrap.appendChild(row);
+
+      const grantRow = document.createElement('div');
+      grantRow.id = 'item-grant-row-'+it.id;
+      grantRow.className = 'form-row';
+      grantRow.style.display = 'none';
+      grantRow.style.marginTop = '-2px';
+      grantRow.style.marginBottom = '14px';
+      grantRow.innerHTML =
+        '<div><label>받을 캐릭터</label>' +
+        '<select id="item-grant-target-'+it.id+'"><option value="">캐릭터를 선택하세요</option>' +
+        allPlayersCache.map(function(p){ return '<option value="'+p.id+'">'+p.name+' ('+(p.items||[]).length+'/'+INVENTORY_MAX+')</option>'; }).join('') +
+        '</select></div>' +
+        '<button data-confirm-item-grant="'+it.id+'">지급하기</button>' +
+        '<button data-cancel-item-grant="'+it.id+'">취소</button>';
+      wrap.appendChild(grantRow);
+
+      const grantStatus = document.createElement('p');
+      grantStatus.id = 'item-grant-status-'+it.id;
+      grantStatus.className = 'footnote';
+      grantStatus.style.marginTop = '-8px';
+      grantStatus.style.marginBottom = '10px';
+      wrap.appendChild(grantStatus);
+    });
+  }
+
+  $('item-search').addEventListener('input', renderItemCatalogList);
+  $('btn-refresh-items').addEventListener('click', refreshItemCatalogList);
+
+  async function cascadeDeleteItemCatalog(itemCatalogId){
+    const players = await loadAllPlayers();
+    for(const p of players){
+      const before = (p.items||[]).length;
+      p.items = (p.items||[]).filter(function(i){ return i.sourceItemId !== itemCatalogId; });
+      if(p.items.length !== before){
+        await savePlayer(p);
+      }
+    }
+  }
+
+  $('item-catalog-list').addEventListener('click', async function(e){
+    const delId = e.target.getAttribute('data-del-item');
+    const editId = e.target.getAttribute('data-edit-item');
+    const grantId = e.target.getAttribute('data-grant-item');
+    const cancelGrantId = e.target.getAttribute('data-cancel-item-grant');
+    const confirmGrantId = e.target.getAttribute('data-confirm-item-grant');
+    if(delId){
+      await deleteItemCatalogFromStorage(delId);
+      await cascadeDeleteItemCatalog(delId);
+      if(editingItemCatalogId === delId) cancelItemCatalogEdit();
+      refreshItemCatalogList();
+    } else if(editId){
+      startItemCatalogEdit(editId);
+    } else if(grantId){
+      allPlayersCache = await loadAllPlayers();
+      document.querySelectorAll('[id^="item-grant-row-"]').forEach(function(el){ el.style.display = 'none'; });
+      renderItemCatalogList();
+      const row = $('item-grant-row-'+grantId);
+      if(row) row.style.display = 'grid';
+    } else if(cancelGrantId){
+      const row = $('item-grant-row-'+cancelGrantId);
+      if(row) row.style.display = 'none';
+    } else if(confirmGrantId){
+      const it = itemCatalogCache.find(function(x){ return x.id === confirmGrantId; });
+      const targetId = $('item-grant-target-'+confirmGrantId).value;
+      const statusEl = $('item-grant-status-'+confirmGrantId);
+      if(!it || !targetId){
+        statusEl.textContent = '받을 캐릭터를 선택하세요.';
+        return;
+      }
+      const players = await loadAllPlayers();
+      const target = players.find(function(x){ return x.id === targetId; });
+      if(!target){ statusEl.textContent = '캐릭터를 찾을 수 없습니다.'; return; }
+      if(!target.items) target.items = [];
+      if(target.items.length >= INVENTORY_MAX){
+        statusEl.textContent = target.name+'의 아이템 칸이 가득 찼습니다.';
+        return;
+      }
+      target.items.push({
+        id: 'item_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+        name: it.name,
+        description: it.description || '',
+        sourceItemId: it.id
+      });
+      await savePlayer(target);
+      statusEl.textContent = '"'+it.name+'"을(를) '+target.name+'에게 지급했습니다.';
+      $('item-grant-row-'+confirmGrantId).style.display = 'none';
+      allPlayersCache = players;
+    }
+  });
+
+  function startItemCatalogEdit(id){
+    const it = itemCatalogCache.find(function(x){ return x.id === id; });
+    if(!it) return;
+    editingItemCatalogId = id;
+    $('item-name').value = it.name;
+    $('item-desc').value = it.description || '';
+    $('item-form-title').textContent = '"'+it.name+'" 수정 중';
+    $('btn-save-item').textContent = '수정 저장';
+    $('btn-cancel-edit-item').style.display = 'inline-block';
+    $('item-save-status').textContent = '';
+  }
+
+  function cancelItemCatalogEdit(){
+    editingItemCatalogId = null;
+    $('item-name').value = '';
+    $('item-desc').value = '';
+    $('item-form-title').textContent = '새 아이템 등록';
+    $('btn-save-item').textContent = '도감에 등록';
+    $('btn-cancel-edit-item').style.display = 'none';
+  }
+
+  $('btn-cancel-edit-item').addEventListener('click', cancelItemCatalogEdit);
+
+  $('btn-save-item').addEventListener('click', async function(){
+    const name = $('item-name').value.trim();
+    if(!name){
+      $('item-save-status').textContent = '아이템 이름을 입력해주세요.';
+      return;
+    }
+    const itemCatalog = {
+      id: editingItemCatalogId || ('item_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)),
+      name: name,
+      description: $('item-desc').value.trim()
+    };
+    const wasEdit = !!editingItemCatalogId;
+    const ok = await saveItemCatalog(itemCatalog);
+    $('item-save-status').textContent = ok
+      ? ('"'+name+'" '+(wasEdit ? '수정 완료. 이미 지급된 아이템에도 반영됩니다.' : '도감에 등록 완료.'))
+      : '저장에 실패했습니다.';
+    if(ok){
+      cancelItemCatalogEdit();
+      refreshItemCatalogList();
+    }
+  });
+
   /* ============ TAB: 캐릭터 관리 ============ */
 
   let allPlayersCache = [];
@@ -1067,6 +1307,7 @@ const db = getFirestore(firebaseApp);
   async function refreshInventoryTab(){
     allPlayersCache = await loadAllPlayers();
     artifactCatalogCache = await loadAllArtifacts();
+    itemCatalogCache = await loadAllItemCatalog();
     const sel = $('inv-player-select');
     const prev = sel.value;
     sel.innerHTML = '<option value="">캐릭터를 선택하세요</option>' +
@@ -1129,6 +1370,31 @@ const db = getFirestore(firebaseApp);
     $('inv-stats').innerHTML = elementSummary(p);
     const full = p.inventory.length >= INVENTORY_MAX;
     $('btn-add-catalog-item').disabled = full;
+
+    if(!p.items) p.items = [];
+    selectedGrantItemId = null;
+    $('inv-item-search').value = '';
+    $('inv-item-suggestions').classList.remove('show');
+    $('inv-item-empty-note').style.display = itemCatalogCache.length === 0 ? 'block' : 'none';
+
+    const itemSlotsWrap = $('inv-item-slots');
+    itemSlotsWrap.innerHTML = '';
+    for(let i=0;i<INVENTORY_MAX;i++){
+      const item = p.items[i];
+      const slot = document.createElement('div');
+      if(item){
+        const r = resolveGeneralItem(item);
+        slot.className = 'item-slot';
+        slot.innerHTML =
+          '<div class="el-info"><div class="el-name">'+(r.name||'이름 없음')+'</div></div>' +
+          '<button data-remove-general-item="'+item.id+'">제거</button>';
+      } else {
+        slot.className = 'item-slot empty';
+        slot.textContent = '빈 슬롯';
+      }
+      itemSlotsWrap.appendChild(slot);
+    }
+    $('btn-add-item').disabled = p.items.length >= INVENTORY_MAX;
 
     $('inv-help-count').textContent = '구조 요청 '+helpRequestsOf(p)+' / 2';
 
@@ -1236,6 +1502,79 @@ const db = getFirestore(firebaseApp);
       name: art.name,
       description: art.description || '',
       sourceArtifactId: art.id
+    });
+    await savePlayer(p);
+    renderInventoryDetail(p.id);
+  });
+
+  let selectedGrantItemId = null;
+
+  $('inv-item-slots').addEventListener('click', async function(e){
+    const itemId = e.target.getAttribute('data-remove-general-item');
+    if(!itemId) return;
+    const p = currentInvPlayer();
+    if(!p) return;
+    p.items = (p.items||[]).filter(function(i){ return i.id !== itemId; });
+    await savePlayer(p);
+    renderInventoryDetail(p.id);
+  });
+
+  $('inv-item-search').addEventListener('input', function(){
+    selectedGrantItemId = null;
+    const query = this.value.trim().toLowerCase();
+    const box = $('inv-item-suggestions');
+    if(!query){
+      box.classList.remove('show');
+      box.innerHTML = '';
+      return;
+    }
+    const matches = itemCatalogCache.filter(function(a){
+      return a.name.toLowerCase().indexOf(query) !== -1;
+    }).slice(0, 8);
+    if(matches.length === 0){
+      box.innerHTML = '<div class="autocomplete-item" style="color:var(--text-mute);">일치하는 아이템이 없습니다.</div>';
+      box.classList.add('show');
+      return;
+    }
+    box.innerHTML = matches.map(function(a){
+      return '<div class="autocomplete-item" data-pick-item="'+a.id+'">'+a.name+
+        (a.description ? '<span class="ac-meta">'+a.description+'</span>' : '')+'</div>';
+    }).join('');
+    box.classList.add('show');
+  });
+
+  $('inv-item-suggestions').addEventListener('click', function(e){
+    const box = e.target.closest('[data-pick-item]');
+    if(!box) return;
+    const itId = box.getAttribute('data-pick-item');
+    const it = itemCatalogCache.find(function(a){ return a.id === itId; });
+    if(!it) return;
+    selectedGrantItemId = it.id;
+    $('inv-item-search').value = it.name;
+    $('inv-item-suggestions').classList.remove('show');
+  });
+
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('.autocomplete-wrap')){
+      $('inv-item-suggestions').classList.remove('show');
+    }
+  });
+
+  $('btn-add-item').addEventListener('click', async function(){
+    const p = currentInvPlayer();
+    if(!p) return;
+    if(!p.items) p.items = [];
+    if(p.items.length >= INVENTORY_MAX) return;
+    const it = itemCatalogCache.find(function(a){ return a.id === selectedGrantItemId; });
+    if(!it){
+      $('inv-item-search').focus();
+      return;
+    }
+    p.items.push({
+      id: 'item_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+      name: it.name,
+      description: it.description || '',
+      sourceItemId: it.id
     });
     await savePlayer(p);
     renderInventoryDetail(p.id);
