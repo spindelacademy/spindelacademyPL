@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>재배 시뮬레이션 - 시련의 탑</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#141009;
+    --panel:#1d170f;
+    --panel2:#251e14;
+    --border:#3c3222;
+    --border-strong:#544732;
+    --text:#ece3d1;
+    --text-dim:#a89980;
+    --text-mute:#7a6d5c;
+    --accent:#d98e3f;
+    --storm:#49b08c;
+    --danger:#e2564f;
+    --success:#6fbf78;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    padding:2rem 1.25rem 4rem;
+    line-height:1.6;
+  }
+  .wrap{max-width:560px;margin:0 auto;}
+  h1,h2,h3{font-family:'Cinzel',serif;font-weight:700;letter-spacing:.02em;margin:0;}
+  h1{font-size:24px;color:var(--accent);}
+  h2{font-size:17px;color:var(--text);}
+  h3{font-size:14px;color:var(--text);font-weight:500;}
+  p{margin:0;}
+  .eyebrow{font-size:12px;color:var(--text-mute);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;}
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:1.1rem 1.25rem;
+    margin-bottom:1rem;
+  }
+  .panel-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.9rem;flex-wrap:wrap;gap:6px;}
+  label{font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px;}
+  input[type=text], input[type=password]{
+    width:100%;
+    background:var(--bg);
+    border:1px solid var(--border-strong);
+    border-radius:6px;
+    padding:8px 10px;
+    color:var(--text);
+    font-family:inherit;
+    font-size:14px;
+  }
+  input:focus{outline:1px solid var(--accent);}
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus{
+    -webkit-text-fill-color: var(--text);
+    -webkit-box-shadow: 0 0 0px 1000px var(--bg) inset;
+    box-shadow: 0 0 0px 1000px var(--bg) inset;
+    transition: background-color 9999s ease-in-out 0s;
+  }
+  button{
+    font-family:inherit;
+    font-size:13px;
+    color:var(--text);
+    background:var(--panel2);
+    border:1px solid var(--border-strong);
+    border-radius:6px;
+    padding:9px 12px;
+    cursor:pointer;
+  }
+  button:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+  button.primary{background:var(--accent);color:#1a1206;border-color:var(--accent);font-weight:600;}
+  button.primary:hover:not(:disabled){color:#1a1206;opacity:.9;}
+  button.wide{width:100%;}
+  .footnote{font-size:12px;color:var(--text-mute);margin-top:.4rem;}
+  .empty-note{color:var(--text-mute);font-size:13px;}
+
+  .login-hero{text-align:center;margin:3.5rem 0 1.75rem;}
+  .login-hero-icon{font-size:38px;margin-bottom:.6rem;}
+  .login-hero-title{font-family:'Cinzel',serif;font-size:26px;color:var(--accent);margin-bottom:.5rem;letter-spacing:.02em;}
+  .login-hero-sub{font-size:13px;color:var(--text-dim);}
+  .login-panel{
+    max-width:360px;margin:0 auto;padding:1.85rem 1.6rem;
+    background:radial-gradient(ellipse at top, rgba(217,142,63,.12), transparent 70%), var(--panel);
+    border:1px solid var(--border);
+  }
+  .login-panel input{padding:12px 13px;font-size:15px;margin-bottom:.15rem;}
+  .login-panel label{margin-top:.3rem;}
+  .login-panel button{padding:13px;font-size:14px;letter-spacing:.02em;margin-top:1.1rem;}
+  .login-hint{text-align:center;margin-top:1.1rem;}
+
+  .farm-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px;}
+  .farm-player-badge{font-size:13px;color:var(--text-dim);}
+  .farm-player-badge b{color:var(--accent);}
+  .farm-herb-count{
+    font-size:12px;color:var(--text-dim);background:var(--panel2);
+    border:1px solid var(--border);border-radius:20px;padding:4px 12px;
+  }
+
+  .farm-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
+  .farm-plot{
+    aspect-ratio:1;border:1px dashed var(--border-strong);border-radius:8px;
+    background:var(--panel2);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;font-size:9px;color:var(--text-mute);cursor:pointer;padding:3px;gap:2px;
+    transition:border-color .15s, background .15s;
+  }
+  .farm-plot:hover{border-color:var(--accent);}
+  .farm-plot .plot-icon{font-size:18px;line-height:1;}
+  .farm-plot .plot-timer{font-size:8.5px;color:var(--text-mute);}
+  .farm-plot .plot-planter{font-size:8px;color:var(--text-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+  .farm-plot.growing{border-style:solid;border-color:var(--storm);}
+  .farm-plot.ready{
+    border-style:solid;border-color:var(--accent);background:rgba(217,142,63,.14);color:var(--text);
+    animation:pulse-ready 1.6s infinite;
+  }
+  @keyframes pulse-ready{
+    0%,100%{box-shadow:0 0 0 0 rgba(217,142,63,.35);}
+    50%{box-shadow:0 0 0 5px rgba(217,142,63,0);}
+  }
+  #farm-status{min-height:18px;font-size:12.5px;color:var(--text-dim);margin-top:.75rem;text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="login-view">
+    <div class="login-hero">
+      <div class="login-hero-icon">\ud83c\udf31</div>
+      <h1 class="login-hero-title">\uc7ac\ubc30 \uc2dc\ubbac\ub808\uc774\uc158</h1>
+      <p class="login-hero-sub">\uce90\ub9ad\ud130\ub85c \ub85c\uadf8\uc778\ud558\uc5ec \ubc16\uc73c\ub85c \ub098\uac00\uc138\uc694</p>
+    </div>
+    <div class="panel login-panel">
+      <label>캐릭터 이름</label>
+      <input type="text" id="login-name" placeholder="캐릭터 이름을 입력하세요">
+      <label style="margin-top:.9rem;">비밀번호</label>
+      <input type="password" id="login-password" placeholder="운영자에게 받은 비밀번호">
+      <button class="primary wide" id="btn-login">로그인</button>
+      <p class="footnote" id="login-status"></p>
+    </div>
+    <p class="footnote login-hint">캐릭터 페이지에 로그인되어 있다면 자동으로 이어집니다.</p>
+  </div>
+
+  <div id="farm-view" style="display:none;">
+
+    <div class="farm-topbar">
+      <div>
+        <div class="eyebrow">herb cultivation</div>
+        <h1 style="font-size:20px;">재배 시뮬레이션</h1>
+      </div>
+      <button id="btn-logout">로그아웃</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="farm-player-badge">플레이어 <b id="farm-player-name"></b></span>
+        <span class="farm-herb-count" id="farm-herb-count">보유 약초 0개</span>
+      </div>
+      <div class="farm-grid" id="farm-grid"></div>
+      <p id="farm-status"></p>
+    </div>
+
+    <div class="panel">
+      <p class="footnote">빈 칸을 클릭하면 씨앗을 심습니다. 다 자란 칸(반짝이는 칸)을 클릭하면 수확해서 내 아이템 칸에 약초가 추가됩니다. 누구나 아무 칸에나 심고 수확할 수 있는 공동 텃밭입니다.</p>
+    </div>
+
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, runTransaction
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDWZZ6nRE4kMvH_2WrGq6U4BKF99ToAAWY",
+  authDomain: "project-4966668896523357297.firebaseapp.com",
+  projectId: "project-4966668896523357297",
+  storageBucket: "project-4966668896523357297.firebasestorage.app",
+  messagingSenderId: "70275867723",
+  appId: "1:70275867723:web:ffff595e30956c700199ce"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
+(function(){
+
+  const $ = (id) => document.getElementById(id);
+
+  const SESSION_KEY = 'trial_tower_portal_session';
+  const BOARD_SIZE = 36;
+  const GROWTH_DURATION_MS = 5 * 60 * 1000; /* 5분. 필요에 맞게 조정하세요. */
+  const HERB_NAME = '약초';
+
+  let sessionPlayerId = null;
+  let currentPlayer = null;
+  let herbCatalogId = null;
+  let boardPlots = null;
+
+  /* ---------- storage helpers ---------- */
+
+  async function savePlayer(player){
+    try{
+      await setDoc(doc(db, 'players', player.id), player);
+      return true;
+    }catch(e){ console.error('savePlayer 실패:', e); return false; }
+  }
+  async function loadAllPlayers(){
+    try{
+      const snap = await getDocs(collection(db, 'players'));
+      const players = [];
+      snap.forEach(function(d){ players.push(d.data()); });
+      return players;
+    }catch(e){ console.error('loadAllPlayers 실패:', e); return []; }
+  }
+  async function loadAllItemCatalog(){
+    try{
+      const snap = await getDocs(collection(db, 'items'));
+      const items = [];
+      snap.forEach(function(d){ items.push(d.data()); });
+      return items;
+    }catch(e){ console.error('loadAllItemCatalog 실패:', e); return []; }
+  }
+
+  function emptyBoard(){
+    const arr = [];
+    for(let i=0;i<BOARD_SIZE;i++) arr.push({ state:'empty' });
+    return arr;
+  }
+
+  async function ensureHerbCatalogItem(){
+    const all = await loadAllItemCatalog();
+    let herb = all.find(function(i){ return i.name === HERB_NAME; });
+    if(!herb){
+      herb = {
+        id: 'item_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+        name: HERB_NAME,
+        description: '재배 시뮬레이션에서 수확한 약초.'
+      };
+      try{ await setDoc(doc(db,'items',herb.id), herb); }catch(e){ console.error(e); }
+    }
+    herbCatalogId = herb.id;
+  }
+
+  /* ---------- login ---------- */
+
+  async function tryAutoLogin(){
+    let savedId = null;
+    try{ savedId = localStorage.getItem(SESSION_KEY); }catch(e){}
+    if(!savedId) return false;
+    const players = await loadAllPlayers();
+    const match = players.find(function(p){ return p.id === savedId; });
+    if(!match){
+      try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+      return false;
+    }
+    sessionPlayerId = match.id;
+    currentPlayer = match;
+    return true;
+  }
+
+  $('btn-login').addEventListener('click', async function(){
+    const name = $('login-name').value.trim();
+    const password = $('login-password').value;
+    if(!name || !password){
+      $('login-status').textContent = '캐릭터 이름과 비밀번호를 모두 입력하세요.';
+      return;
+    }
+    const players = await loadAllPlayers();
+    const match = players.find(function(p){ return p.name === name; });
+    if(!match || (match.password||'') !== password){
+      $('login-status').textContent = '캐릭터 이름 또는 비밀번호가 올바르지 않습니다.';
+      return;
+    }
+    sessionPlayerId = match.id;
+    currentPlayer = match;
+    try{ localStorage.setItem(SESSION_KEY, match.id); }catch(e){}
+    $('login-status').textContent = '';
+    await enterFarm();
+  });
+
+  $('btn-logout').addEventListener('click', function(){
+    sessionPlayerId = null;
+    currentPlayer = null;
+    try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+    $('login-name').value = '';
+    $('login-password').value = '';
+    $('farm-view').style.display = 'none';
+    $('login-view').style.display = 'block';
+  });
+
+  async function enterFarm(){
+    $('login-view').style.display = 'none';
+    $('farm-view').style.display = 'block';
+    $('farm-player-name').textContent = currentPlayer.name;
+    await ensureHerbCatalogItem();
+    await loadBoard();
+    updateHerbCount();
+    startTimers();
+  }
+
+  /* ---------- board rendering ---------- */
+
+  async function loadBoard(){
+    try{
+      const snap = await getDoc(doc(db, 'farm', 'board'));
+      if(snap.exists() && Array.isArray(snap.data().plots) && snap.data().plots.length === BOARD_SIZE){
+        boardPlots = snap.data().plots;
+      } else {
+        boardPlots = emptyBoard();
+      }
+    }catch(e){
+      console.error('loadBoard 실패:', e);
+      boardPlots = boardPlots || emptyBoard();
+    }
+    renderBoard();
+  }
+
+  function formatRemaining(ms){
+    if(ms <= 0) return '';
+    const totalSec = Math.ceil(ms/1000);
+    const m = Math.floor(totalSec/60);
+    const s = totalSec%60;
+    return m>0 ? (m+'분 '+s+'초 남음') : (s+'초 남음');
+  }
+
+  function renderBoard(){
+    if(!boardPlots) return;
+    const grid = $('farm-grid');
+    grid.innerHTML = '';
+    const now = Date.now();
+    boardPlots.forEach(function(plot, idx){
+      const cell = document.createElement('div');
+      const isGrowing = plot.state === 'growing' && now < plot.readyAt;
+      const isReady = plot.state === 'growing' && now >= plot.readyAt;
+      if(isGrowing){
+        cell.className = 'farm-plot growing';
+        cell.innerHTML =
+          '<div class="plot-icon">\ud83c\udf31</div>' +
+          '<div class="plot-timer">'+formatRemaining(plot.readyAt-now)+'</div>' +
+          '<div class="plot-planter">'+(plot.plantedByName||'')+'</div>';
+      } else if(isReady){
+        cell.className = 'farm-plot ready';
+        cell.innerHTML =
+          '<div class="plot-icon">\ud83c\udf3f</div>' +
+          '<div class="plot-timer">수확 가능</div>' +
+          '<div class="plot-planter">'+(plot.plantedByName||'')+'</div>';
+      } else {
+        cell.className = 'farm-plot';
+        cell.innerHTML = '<div class="plot-icon">+</div>';
+      }
+      cell.addEventListener('click', function(){ handlePlotClick(idx); });
+      grid.appendChild(cell);
+    });
+  }
+
+  function tickTimers(){
+    if(!boardPlots) return;
+    /* 초 단위로 남은 시간 및 수확 가능 여부를 다시 계산해야 하므로 매초 전체 재렌더한다 */
+    renderBoard();
+  }
+
+  function startTimers(){
+    setInterval(tickTimers, 1000);
+    setInterval(function(){ loadBoard(); }, 8000);
+  }
+
+  function showStatus(text){
+    $('farm-status').textContent = text;
+  }
+
+  function updateHerbCount(){
+    const items = currentPlayer.items || [];
+    const stack = items.find(function(i){ return i.sourceItemId === herbCatalogId; });
+    $('farm-herb-count').textContent = '보유 약초 '+(stack ? (stack.quantity||0) : 0)+'개';
+  }
+
+  /* ---------- plant / harvest ---------- */
+
+  function handlePlotClick(idx){
+    const plot = boardPlots[idx];
+    const now = Date.now();
+    if(!plot || plot.state === 'empty'){
+      plantPlot(idx);
+    } else if(plot.state === 'growing' && now >= plot.readyAt){
+      harvestPlot(idx);
+    } else {
+      showStatus('아직 자라는 중입니다.');
+    }
+  }
+
+  async function plantPlot(idx){
+    if(!currentPlayer) return;
+    const boardRef = doc(db, 'farm', 'board');
+    try{
+      await runTransaction(db, async function(tx){
+        const snap = await tx.get(boardRef);
+        const data = snap.exists() ? snap.data() : { plots: emptyBoard() };
+        const plots = (Array.isArray(data.plots) && data.plots.length === BOARD_SIZE) ? data.plots.slice() : emptyBoard();
+        const plot = plots[idx];
+        if(plot && plot.state && plot.state !== 'empty'){
+          throw new Error('OCCUPIED');
+        }
+        const now = Date.now();
+        plots[idx] = {
+          state: 'growing',
+          plantedBy: currentPlayer.id,
+          plantedByName: currentPlayer.name,
+          plantedAt: now,
+          readyAt: now + GROWTH_DURATION_MS
+        };
+        tx.set(boardRef, { plots: plots });
+      });
+      await loadBoard();
+      showStatus('씨앗을 심었습니다.');
+    }catch(e){
+      if(e.message === 'OCCUPIED') showStatus('이미 다른 씨앗이 심겨 있습니다.');
+      else { console.error(e); showStatus('오류가 발생했습니다. 다시 시도해주세요.'); }
+    }
+  }
+
+  async function harvestPlot(idx){
+    if(!currentPlayer || !herbCatalogId) return;
+    const boardRef = doc(db, 'farm', 'board');
+    const playerRef = doc(db, 'players', currentPlayer.id);
+    try{
+      await runTransaction(db, async function(tx){
+        const boardSnap = await tx.get(boardRef);
+        const playerSnap = await tx.get(playerRef);
+        if(!boardSnap.exists()) throw new Error('NO_BOARD');
+        const data = boardSnap.data();
+        const plots = (Array.isArray(data.plots) && data.plots.length === BOARD_SIZE) ? data.plots.slice() : emptyBoard();
+        const plot = plots[idx];
+        if(!plot || plot.state !== 'growing' || Date.now() < plot.readyAt){
+          throw new Error('NOT_READY');
+        }
+        const playerData = playerSnap.exists() ? playerSnap.data() : currentPlayer;
+        const items = (playerData.items || []).slice();
+        const existing = items.find(function(i){ return i.sourceItemId === herbCatalogId; });
+        if(existing){
+          existing.quantity = (existing.quantity||1) + 1;
+        } else {
+          items.push({ sourceItemId: herbCatalogId, name: HERB_NAME, description: '재배 시뮬레이션에서 수확한 약초.', quantity: 1 });
+        }
+        plots[idx] = { state: 'empty' };
+        const updatedPlayer = Object.assign({}, playerData, { items: items });
+        tx.set(boardRef, { plots: plots });
+        tx.set(playerRef, updatedPlayer);
+        currentPlayer = updatedPlayer;
+      });
+      await loadBoard();
+      updateHerbCount();
+      showStatus(HERB_NAME+'을(를) 수확했습니다!');
+    }catch(e){
+      if(e.message === 'NOT_READY') showStatus('아직 수확할 수 없습니다.');
+      else { console.error(e); showStatus('오류가 발생했습니다. 다시 시도해주세요.'); }
+    }
+  }
+
+  /* ---------- init ---------- */
+
+  (async function init(){
+    const ok = await tryAutoLogin();
+    if(ok){
+      await enterFarm();
+    }
+  })();
+
+})();
+</script>
+</body>
+</html>
