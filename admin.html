@@ -147,6 +147,22 @@
   .char-summary-pw{font-size:11px;color:var(--text-mute);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 8px;}
   .hp-mini{font-size:11px;color:var(--text-dim);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 9px;}
   .char-summary-actions{margin-top:6px;}
+
+  .log-row{
+    background:var(--panel2);border:1px solid var(--border);border-radius:10px;
+    padding:12px 14px;margin-bottom:8px;
+  }
+  .log-row-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;gap:8px;flex-wrap:wrap;}
+  .log-action-badge{
+    font-size:12px;font-weight:700;padding:3px 11px;border-radius:20px;
+    border:1px solid var(--el-color);color:var(--el-color);white-space:nowrap;
+  }
+  .log-time{font-size:11.5px;color:var(--text-mute);white-space:nowrap;}
+  .log-actor{font-weight:700;font-size:15px;color:var(--text);}
+  .log-detail{font-size:13.5px;color:var(--text-dim);margin-top:3px;line-height:1.55;}
+  .log-highlight{color:var(--accent);font-weight:700;}
+  .log-pagination{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:1rem;}
+  .log-pagination span{font-size:13px;color:var(--text-dim);}
   .party-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.75rem;}
   .slot{
     border:1px dashed var(--border-strong);border-radius:8px;
@@ -555,6 +571,11 @@
       <p class="footnote" style="margin-bottom:.6rem;">플레이어의 로그인/로그아웃, 양도, 조합, 초상화 변경, 텃밭 심기/수확 기록입니다. 최신순으로 표시됩니다.</p>
       <input type="text" id="log-search" placeholder="캐릭터 이름으로 검색" style="margin-bottom:.75rem;">
       <div id="system-log-list"></div>
+      <div class="log-pagination" id="log-pagination" style="display:none;">
+        <button id="btn-log-prev">← 이전</button>
+        <span id="log-page-indicator"></span>
+        <button id="btn-log-next">다음 →</button>
+      </div>
     </div>
   </div>
 
@@ -2259,6 +2280,8 @@ const db = getFirestore(firebaseApp);
   /* ============ TAB: 시스템 로그 ============ */
 
   let logsCache = [];
+  let logPage = 0;
+  const LOGS_PER_PAGE = 20;
 
   const LOG_ACTION_COLOR = {
     '로그인': 'var(--success)',
@@ -2277,17 +2300,21 @@ const db = getFirestore(firebaseApp);
     return (d.getMonth()+1)+'/'+d.getDate()+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
   }
 
-  function formatLogDetails(entry){
+  function escapeHtml(s){
+    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function formatLogDetail(entry){
     const d = entry.details || {};
     switch(entry.action){
       case '양도':
-        return (d.items||[]).join(', ')+'을(를) '+(d.to||'')+'에게 양도';
+        return escapeHtml((d.items||[]).join(', '))+'을(를) <span class="log-highlight">'+escapeHtml(d.to||'')+'</span>에게 양도';
       case '조합':
-        return (d.materials||[]).join(' + ')+' \u2192 '+(d.result||'');
+        return escapeHtml((d.materials||[]).join(' + '))+' \u2192 <span class="log-highlight">'+escapeHtml(d.result||'')+'</span>';
       case '씨앗 심기':
         return '텃밭 '+((d.plot!==undefined? (d.plot+1) : '?'))+'번 칸에 씨앗을 심음';
       case '수확':
-        return '텃밭 '+((d.plot!==undefined? (d.plot+1) : '?'))+'번 칸에서 '+(d.herb||'아이템')+' 수확';
+        return '텃밭 '+((d.plot!==undefined? (d.plot+1) : '?'))+'번 칸에서 <span class="log-highlight">'+escapeHtml(d.herb||'아이템')+'</span> 수확';
       default:
         return '';
     }
@@ -2295,7 +2322,15 @@ const db = getFirestore(firebaseApp);
 
   async function refreshLogList(){
     logsCache = await loadAllLogs();
+    logPage = 0;
     renderLogList();
+  }
+
+  function getFilteredLogs(){
+    const query = ($('log-search').value || '').trim().toLowerCase();
+    return logsCache.filter(function(l){
+      return !query || (l.playerName||'').toLowerCase().indexOf(query) !== -1;
+    });
   }
 
   function renderLogList(){
@@ -2303,32 +2338,52 @@ const db = getFirestore(firebaseApp);
     wrap.innerHTML = '';
     if(logsCache.length === 0){
       wrap.innerHTML = '<p class="empty-note">기록된 로그가 없습니다.</p>';
+      $('log-pagination').style.display = 'none';
       return;
     }
-    const query = ($('log-search').value || '').trim().toLowerCase();
-    const filtered = logsCache.filter(function(l){
-      return !query || (l.playerName||'').toLowerCase().indexOf(query) !== -1;
-    });
+    const filtered = getFilteredLogs();
     if(filtered.length === 0){
       wrap.innerHTML = '<p class="empty-note">검색 결과가 없습니다.</p>';
+      $('log-pagination').style.display = 'none';
       return;
     }
-    filtered.forEach(function(l){
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / LOGS_PER_PAGE));
+    if(logPage >= totalPages) logPage = totalPages - 1;
+    if(logPage < 0) logPage = 0;
+
+    const start = logPage * LOGS_PER_PAGE;
+    const pageItems = filtered.slice(start, start + LOGS_PER_PAGE);
+
+    pageItems.forEach(function(l){
       const row = document.createElement('div');
-      row.className = 'char-row';
+      row.className = 'log-row';
       const color = LOG_ACTION_COLOR[l.action] || 'var(--text-dim)';
-      const detail = formatLogDetails(l);
+      const detail = formatLogDetail(l);
       row.innerHTML =
-        '<span class="footnote" style="min-width:88px;">'+formatLogTime(l.timestamp)+'</span>' +
-        '<span class="char-name" style="min-width:70px;">'+(l.playerName||'-')+'</span>' +
-        '<span class="badge" style="--el-color:'+color+';flex-shrink:0;">'+l.action+'</span>' +
-        '<span class="footnote" style="flex:1;">'+detail+'</span>';
+        '<div class="log-row-top">' +
+          '<span class="log-actor">'+escapeHtml(l.playerName||'-')+'</span>' +
+          '<span class="log-action-badge" style="--el-color:'+color+';">'+escapeHtml(l.action)+'</span>' +
+          '<span class="log-time">'+formatLogTime(l.timestamp)+'</span>' +
+        '</div>' +
+        (detail ? '<div class="log-detail">'+detail+'</div>' : '');
       wrap.appendChild(row);
     });
+
+    if(totalPages > 1){
+      $('log-pagination').style.display = 'flex';
+      $('log-page-indicator').textContent = (logPage+1)+' / '+totalPages+' 페이지 (총 '+filtered.length+'건)';
+      $('btn-log-prev').disabled = logPage <= 0;
+      $('btn-log-next').disabled = logPage >= totalPages-1;
+    } else {
+      $('log-pagination').style.display = 'none';
+    }
   }
 
-  $('log-search').addEventListener('input', renderLogList);
+  $('log-search').addEventListener('input', function(){ logPage = 0; renderLogList(); });
   $('btn-refresh-logs').addEventListener('click', refreshLogList);
+  $('btn-log-prev').addEventListener('click', function(){ logPage--; renderLogList(); });
+  $('btn-log-next').addEventListener('click', function(){ logPage++; renderLogList(); });
 
   /* ---------- admin password gate ---------- */
 
