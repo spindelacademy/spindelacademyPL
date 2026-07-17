@@ -243,17 +243,20 @@
   .sheet-vitals-box{flex:1 1 150px;flex-direction:column;gap:16px;}
   .vitals-row{display:flex;flex-direction:column;align-items:center;width:100%;}
   .portrait-frame-wrap{
-    position:relative;width:349px;height:334px;max-width:100%;
+    position:relative;
+    width:min(349px, 62vw);
+    aspect-ratio:349/334;
+    max-width:100%;
     display:flex;align-items:center;justify-content:center;
     flex-shrink:0;margin:0 auto;
   }
   .portrait-frame-overlay{
-    position:absolute;top:2px;left:-1px;
-    width:349px;height:334px;
+    position:absolute;top:0.6%;left:-0.29%;
+    width:100%;height:100%;
     pointer-events:none;z-index:2;
   }
   .portrait-frame{
-    width:168px;height:168px;border-radius:50%;
+    width:48.14%;height:50.30%;border-radius:50%;
     background:var(--panel2);
     display:flex;align-items:center;justify-content:center;
     overflow:hidden;flex-shrink:0;cursor:pointer;
@@ -266,7 +269,7 @@
     display:flex;align-items:center;justify-content:center;
   }
   .portrait-frame img{width:100%;height:100%;object-fit:cover;}
-  .portrait-placeholder{font-family:'Cormorant Garamond',serif;font-size:56px;color:var(--accent);}
+  .portrait-placeholder{font-family:'Cormorant Garamond',serif;font-size:clamp(28px,9vw,56px);color:var(--accent);}
   .char-sheet-name{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:22px;color:var(--text);}
   .sheet-box-label{
     font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:600;color:var(--text-dim);
@@ -999,10 +1002,12 @@ const db = getFirestore(firebaseApp);
       ghost.style.top = (touch.clientY - el.offsetHeight/2)+'px';
       document.body.appendChild(ghost);
       dragState = { payload: payload, ghostEl: ghost };
-    }, {passive:true});
+      e.preventDefault();
+    }, {passive:false});
 
     el.addEventListener('touchmove', function(e){
       if(!dragState) return;
+      e.preventDefault();
       const touch = e.touches[0];
       dragState.ghostEl.style.left = (touch.clientX - el.offsetWidth/2)+'px';
       dragState.ghostEl.style.top = (touch.clientY - el.offsetHeight/2)+'px';
@@ -1011,7 +1016,7 @@ const db = getFirestore(firebaseApp);
         const over = rect.width>0 && touch.clientX>=rect.left && touch.clientX<=rect.right && touch.clientY>=rect.top && touch.clientY<=rect.bottom;
         z.classList.toggle('dropzone-hover', over);
       });
-    }, {passive:true});
+    }, {passive:false});
 
     el.addEventListener('touchend', function(e){
       if(!dragState) return;
