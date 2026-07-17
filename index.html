@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>시련의 탑</title>
+<title>멈추어라 순간이여 너는 참 아름답구나</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -214,7 +214,7 @@
   #login-view, #char-view{position:relative;z-index:1;}
   .login-hero{text-align:center;margin:4rem 0 2rem;}
   .login-eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--text-mute);margin-bottom:1.2rem;}
-  .login-hero-title{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:40px;color:var(--text);margin-bottom:1.1rem;letter-spacing:.02em;}
+  .login-hero-title{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(24px,6vw,34px);line-height:1.25;color:var(--text);margin-bottom:1.1rem;letter-spacing:.01em;}
   .login-hero-divider{width:1px;height:40px;background:linear-gradient(var(--border),var(--accent));opacity:.6;margin:0 auto 1.1rem;}
   .login-hero-sub{font-size:13px;color:var(--text-dim);}
   .login-panel{
@@ -391,10 +391,10 @@
 
   <div id="login-view">
     <div class="login-hero">
-      <div class="login-eyebrow">turn-based artifact rpg</div>
-      <h1 class="login-hero-title">시련의 탑</h1>
+      <div class="login-eyebrow">Verweile doch. Du bist so schön.</div>
+      <h1 class="login-hero-title">멈추어라 순간이여<br>너는 참 아름답구나</h1>
       <div class="login-hero-divider"></div>
-      <p class="login-hero-sub">캐릭터로 로그인하여 상태를 확인하세요</p>
+      <p class="login-hero-sub">스핀델 아카데미에 오신 것을 환영합니다.</p>
     </div>
     <div class="panel login-panel">
       <label>캐릭터 이름</label>
@@ -404,7 +404,6 @@
       <button class="primary wide" id="btn-login">로그인</button>
       <p class="footnote" id="login-status"></p>
     </div>
-    <p class="footnote login-hint">비밀번호를 모르면 운영자에게 문의하세요.</p>
   </div>
 
   <div id="char-view" style="display:none;">
