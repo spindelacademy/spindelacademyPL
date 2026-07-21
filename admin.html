@@ -549,7 +549,12 @@
     <div class="panel">
       <div class="panel-head"><h2>보유 현황</h2><button id="btn-refresh-holdings">새로고침</button></div>
       <p class="footnote" style="margin-bottom:.6rem;">모든 캐릭터의 아티팩트·아이템 보유 현황을 한눈에 볼 수 있습니다.</p>
-      <input type="text" id="holdings-search" placeholder="캐릭터 이름 검색" style="margin-bottom:.75rem;">
+      <input type="text" id="holdings-search" placeholder="캐릭터·아티팩트·아이템 이름 검색" style="margin-bottom:.75rem;">
+      <div class="filter-chip-row" id="holdings-filter-row">
+        <button type="button" class="filter-chip active" data-holdings-filter="all">전체</button>
+        <button type="button" class="filter-chip" data-holdings-filter="artifact">아티팩트만</button>
+        <button type="button" class="filter-chip" data-holdings-filter="item">아이템만</button>
+      </div>
       <div id="holdings-list"></div>
     </div>
   </div>
@@ -1779,12 +1784,24 @@ const db = getFirestore(firebaseApp);
 
   /* ============ TAB: 보유 현황 ============ */
 
+  let holdingsFilterMode = 'all';
+
   async function refreshHoldingsList(){
     allPlayersCache = await loadAllPlayers();
     artifactCatalogCache = await loadAllArtifacts();
     itemCatalogCache = await loadAllItemCatalog();
     renderHoldingsList();
   }
+
+  $('holdings-filter-row').addEventListener('click', function(e){
+    const mode = e.target.getAttribute('data-holdings-filter');
+    if(!mode) return;
+    holdingsFilterMode = mode;
+    document.querySelectorAll('#holdings-filter-row .filter-chip').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-holdings-filter') === mode);
+    });
+    renderHoldingsList();
+  });
 
   function renderHoldingsList(){
     const wrap = $('holdings-list');
@@ -1794,9 +1811,23 @@ const db = getFirestore(firebaseApp);
       return;
     }
     const query = ($('holdings-search').value || '').trim().toLowerCase();
+    const showArtifacts = holdingsFilterMode !== 'item';
+    const showItems = holdingsFilterMode !== 'artifact';
+
     const filtered = allPlayersCache.filter(function(p){
-      return !query || p.name.toLowerCase().indexOf(query) !== -1;
+      if(!query) return true;
+      if(p.name.toLowerCase().indexOf(query) !== -1) return true;
+      if(showArtifacts && (p.inventory||[]).some(function(item){
+        const r = resolveItem(item);
+        return (r.name || ELEMENT_NAME[r.element]).toLowerCase().indexOf(query) !== -1;
+      })) return true;
+      if(showItems && (p.items||[]).some(function(item){
+        const r = resolveGeneralItem(item);
+        return (r.name||'').toLowerCase().indexOf(query) !== -1;
+      })) return true;
+      return false;
     });
+
     if(filtered.length === 0){
       wrap.innerHTML = '<p class="empty-note">검색 결과가 없습니다.</p>';
       return;
@@ -1805,26 +1836,33 @@ const db = getFirestore(firebaseApp);
       const row = document.createElement('div');
       row.className = 'holdings-row';
 
-      const artifactChips = (p.inventory||[]).map(function(item){
-        const r = resolveItem(item);
-        return '<span class="holdings-chip" style="--el-color:'+ELEMENT_COLOR[r.element]+'">'+(r.name || ELEMENT_NAME[r.element])+' +'+r.value+'</span>';
-      }).join('');
+      let groupsHtml = '<div class="holdings-top"><span class="holdings-name">'+p.name+'</span></div>';
 
-      const itemChips = (p.items||[]).map(function(item){
-        const r = resolveGeneralItem(item);
-        return '<span class="holdings-chip item-chip">'+(r.name||'이름 없음')+' x'+(item.quantity||1)+'</span>';
-      }).join('');
+      if(showArtifacts){
+        const artifactChips = (p.inventory||[]).map(function(item){
+          const r = resolveItem(item);
+          return '<span class="holdings-chip" style="--el-color:'+ELEMENT_COLOR[r.element]+'">'+(r.name || ELEMENT_NAME[r.element])+' +'+r.value+'</span>';
+        }).join('');
+        groupsHtml +=
+          '<div class="holdings-group">' +
+            '<span class="holdings-label">아티팩트 ('+(p.inventory||[]).length+')</span>' +
+            '<div class="holdings-chips">'+(artifactChips || '<span class="holdings-empty">없음</span>')+'</div>' +
+          '</div>';
+      }
 
-      row.innerHTML =
-        '<div class="holdings-top"><span class="holdings-name">'+p.name+'</span></div>' +
-        '<div class="holdings-group">' +
-          '<span class="holdings-label">아티팩트 ('+(p.inventory||[]).length+')</span>' +
-          '<div class="holdings-chips">'+(artifactChips || '<span class="holdings-empty">없음</span>')+'</div>' +
-        '</div>' +
-        '<div class="holdings-group">' +
-          '<span class="holdings-label">아이템 ('+(p.items||[]).length+'종)</span>' +
-          '<div class="holdings-chips">'+(itemChips || '<span class="holdings-empty">없음</span>')+'</div>' +
-        '</div>';
+      if(showItems){
+        const itemChips = (p.items||[]).map(function(item){
+          const r = resolveGeneralItem(item);
+          return '<span class="holdings-chip item-chip">'+(r.name||'이름 없음')+' x'+(item.quantity||1)+'</span>';
+        }).join('');
+        groupsHtml +=
+          '<div class="holdings-group">' +
+            '<span class="holdings-label">아이템 ('+(p.items||[]).length+'종)</span>' +
+            '<div class="holdings-chips">'+(itemChips || '<span class="holdings-empty">없음</span>')+'</div>' +
+          '</div>';
+      }
+
+      row.innerHTML = groupsHtml;
       wrap.appendChild(row);
     });
   }
