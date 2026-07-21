@@ -148,6 +148,24 @@
   .hp-mini{font-size:11px;color:var(--text-dim);background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px 9px;}
   .char-summary-actions{margin-top:6px;}
 
+  .holdings-row{
+    background:var(--panel2);border:1px solid var(--border);border-radius:10px;
+    padding:12px 14px;margin-bottom:8px;
+  }
+  .holdings-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
+  .holdings-name{font-weight:700;font-size:15px;color:var(--text);}
+  .holdings-group{margin-top:6px;}
+  .holdings-group:first-of-type{margin-top:0;}
+  .holdings-label{font-size:11px;color:var(--text-mute);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:5px;}
+  .holdings-chips{display:flex;flex-wrap:wrap;gap:5px;}
+  .holdings-chip{
+    font-size:12px;padding:3px 9px;border-radius:20px;white-space:normal;
+    border:1px solid var(--el-color, var(--border-strong));color:var(--el-color, var(--text-dim));
+    line-height:1.4;
+  }
+  .holdings-chip.item-chip{border-color:var(--border-strong);color:var(--text-dim);}
+  .holdings-empty{font-size:12px;color:var(--text-mute);}
+
   .log-row{
     background:var(--panel2);border:1px solid var(--border);border-radius:10px;
     padding:12px 14px;margin-bottom:8px;
@@ -347,6 +365,7 @@
     <button data-tab="tab-artifacts">아티팩트 도감</button>
     <button data-tab="tab-items">아이템 도감</button>
     <button data-tab="tab-inventory">캐릭터 관리</button>
+    <button data-tab="tab-holdings">보유 현황</button>
     <button data-tab="tab-battle">전투 시뮬레이터</button>
     <button data-tab="tab-logs">시스템 로그</button>
   </div>
@@ -522,6 +541,16 @@
         <button id="btn-save-hp">저장</button>
       </div>
       <p class="footnote" id="inv-hp-status"></p>
+    </div>
+  </div>
+
+  <!-- ================= TAB: 보유 현황 ================= -->
+  <div id="tab-holdings" class="tab">
+    <div class="panel">
+      <div class="panel-head"><h2>보유 현황</h2><button id="btn-refresh-holdings">새로고침</button></div>
+      <p class="footnote" style="margin-bottom:.6rem;">모든 캐릭터의 아티팩트·아이템 보유 현황을 한눈에 볼 수 있습니다.</p>
+      <input type="text" id="holdings-search" placeholder="캐릭터 이름 검색" style="margin-bottom:.75rem;">
+      <div id="holdings-list"></div>
     </div>
   </div>
 
@@ -831,6 +860,7 @@ const db = getFirestore(firebaseApp);
       if(btn.getAttribute('data-tab') === 'tab-artifacts') refreshArtifactList();
       if(btn.getAttribute('data-tab') === 'tab-items'){ refreshItemCatalogList(); refreshRecipeList(); }
       if(btn.getAttribute('data-tab') === 'tab-inventory') refreshInventoryTab();
+      if(btn.getAttribute('data-tab') === 'tab-holdings') refreshHoldingsList();
       if(btn.getAttribute('data-tab') === 'tab-battle') refreshPartyTab();
       if(btn.getAttribute('data-tab') === 'tab-logs') refreshLogList();
     });
@@ -1746,6 +1776,61 @@ const db = getFirestore(firebaseApp);
     await savePlayer(p);
     renderInventoryDetail(p.id);
   });
+
+  /* ============ TAB: 보유 현황 ============ */
+
+  async function refreshHoldingsList(){
+    allPlayersCache = await loadAllPlayers();
+    artifactCatalogCache = await loadAllArtifacts();
+    itemCatalogCache = await loadAllItemCatalog();
+    renderHoldingsList();
+  }
+
+  function renderHoldingsList(){
+    const wrap = $('holdings-list');
+    wrap.innerHTML = '';
+    if(allPlayersCache.length === 0){
+      wrap.innerHTML = '<p class="empty-note">등록된 캐릭터가 없습니다.</p>';
+      return;
+    }
+    const query = ($('holdings-search').value || '').trim().toLowerCase();
+    const filtered = allPlayersCache.filter(function(p){
+      return !query || p.name.toLowerCase().indexOf(query) !== -1;
+    });
+    if(filtered.length === 0){
+      wrap.innerHTML = '<p class="empty-note">검색 결과가 없습니다.</p>';
+      return;
+    }
+    filtered.forEach(function(p){
+      const row = document.createElement('div');
+      row.className = 'holdings-row';
+
+      const artifactChips = (p.inventory||[]).map(function(item){
+        const r = resolveItem(item);
+        return '<span class="holdings-chip" style="--el-color:'+ELEMENT_COLOR[r.element]+'">'+(r.name || ELEMENT_NAME[r.element])+' +'+r.value+'</span>';
+      }).join('');
+
+      const itemChips = (p.items||[]).map(function(item){
+        const r = resolveGeneralItem(item);
+        return '<span class="holdings-chip item-chip">'+(r.name||'이름 없음')+' x'+(item.quantity||1)+'</span>';
+      }).join('');
+
+      row.innerHTML =
+        '<div class="holdings-top"><span class="holdings-name">'+p.name+'</span></div>' +
+        '<div class="holdings-group">' +
+          '<span class="holdings-label">아티팩트 ('+(p.inventory||[]).length+')</span>' +
+          '<div class="holdings-chips">'+(artifactChips || '<span class="holdings-empty">없음</span>')+'</div>' +
+        '</div>' +
+        '<div class="holdings-group">' +
+          '<span class="holdings-label">아이템 ('+(p.items||[]).length+'종)</span>' +
+          '<div class="holdings-chips">'+(itemChips || '<span class="holdings-empty">없음</span>')+'</div>' +
+        '</div>';
+      wrap.appendChild(row);
+    });
+  }
+
+  $('holdings-search').addEventListener('input', renderHoldingsList);
+  $('btn-refresh-holdings').addEventListener('click', refreshHoldingsList);
 
   /* ============ TAB: 전투 시뮬레이터 - setup ============ */
 
