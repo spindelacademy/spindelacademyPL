@@ -178,31 +178,39 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
-  getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, runTransaction
+  getFirestore, doc, setDoc, getDoc, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDWZZ6nRE4kMvH_2WrGq6U4BKF99ToAAWY",
-  authDomain: "project-4966668896523357297.firebaseapp.com",
-  projectId: "project-4966668896523357297",
-  storageBucket: "project-4966668896523357297.firebasestorage.app",
-  messagingSenderId: "70275867723",
-  appId: "1:70275867723:web:ffff595e30956c700199ce"
+  apiKey: "AIzaSyD9rJsF_Jbut0GiiuhEKQFczVqvgmWfLOc",
+  authDomain: "spindel-academy.firebaseapp.com",
+  projectId: "spindel-academy",
+  storageBucket: "spindel-academy.firebasestorage.app",
+  messagingSenderId: "824092881561",
+  appId: "1:824092881561:web:92c008333262ed237e3e08"
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
+const auth = getAuth(firebaseApp);
+setPersistence(auth, browserLocalPersistence).catch(function(e){ console.error(e); });
+
+function nameToEmail(name){
+  const slug = name.trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_가-힣]/g,'');
+  return 'char_'+encodeURIComponent(slug)+'@spindelacademy.local';
+}
 
 (function(){
 
   const $ = (id) => document.getElementById(id);
 
-  const SESSION_KEY = 'trial_tower_portal_session';
   const BOARD_SIZE = 36;
   const GROWTH_DURATION_MS = 5 * 60 * 1000; /* 5분. 필요에 맞게 조정하세요. */
   const HERB_NAME = '약초';
 
-  let sessionPlayerId = null;
   let currentPlayer = null;
   let herbCatalogId = null;
   let boardPlots = null;
@@ -215,23 +223,12 @@ const db = getFirestore(firebaseApp);
       return true;
     }catch(e){ console.error('savePlayer 실패:', e); return false; }
   }
-  async function loadAllPlayers(){
+  async function getMyPlayerDoc(uid){
     try{
-      const snap = await getDocs(collection(db, 'players'));
-      const players = [];
-      snap.forEach(function(d){ players.push(d.data()); });
-      return players;
-    }catch(e){ console.error('loadAllPlayers 실패:', e); return []; }
+      const snap = await getDoc(doc(db, 'players', uid));
+      return snap.exists() ? snap.data() : null;
+    }catch(e){ console.error('getMyPlayerDoc 실패:', e); return null; }
   }
-  async function loadAllItemCatalog(){
-    try{
-      const snap = await getDocs(collection(db, 'items'));
-      const items = [];
-      snap.forEach(function(d){ items.push(d.data()); });
-      return items;
-    }catch(e){ console.error('loadAllItemCatalog 실패:', e); return []; }
-  }
-
   async function logAction(playerName, action, details){
     try{
       const entry = {
@@ -251,36 +248,24 @@ const db = getFirestore(firebaseApp);
     return arr;
   }
 
+  const HERB_CATALOG_ID = 'herb_default'; /* 운영자 페이지에서 자동으로 생성해두는 고정 ID */
+
   async function ensureHerbCatalogItem(){
-    const all = await loadAllItemCatalog();
-    let herb = all.find(function(i){ return i.name === HERB_NAME; });
-    if(!herb){
-      herb = {
-        id: 'item_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
-        name: HERB_NAME,
-        description: '재배 시뮬레이션에서 수확한 약초.'
-      };
-      try{ await setDoc(doc(db,'items',herb.id), herb); }catch(e){ console.error(e); }
+    try{
+      const snap = await getDoc(doc(db, 'items', HERB_CATALOG_ID));
+      if(snap.exists()){
+        herbCatalogId = HERB_CATALOG_ID;
+      } else {
+        herbCatalogId = null;
+        showStatus('아직 운영자가 "약초" 아이템을 등록하지 않았습니다. 운영자에게 문의하세요.');
+      }
+    }catch(e){
+      console.error(e);
+      herbCatalogId = null;
     }
-    herbCatalogId = herb.id;
   }
 
   /* ---------- login ---------- */
-
-  async function tryAutoLogin(){
-    let savedId = null;
-    try{ savedId = localStorage.getItem(SESSION_KEY); }catch(e){}
-    if(!savedId) return false;
-    const players = await loadAllPlayers();
-    const match = players.find(function(p){ return p.id === savedId; });
-    if(!match){
-      try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
-      return false;
-    }
-    sessionPlayerId = match.id;
-    currentPlayer = match;
-    return true;
-  }
 
   $('btn-login').addEventListener('click', async function(){
     const name = $('login-name').value.trim();
@@ -289,27 +274,38 @@ const db = getFirestore(firebaseApp);
       $('login-status').textContent = '캐릭터 이름과 비밀번호를 모두 입력하세요.';
       return;
     }
-    const players = await loadAllPlayers();
-    const match = players.find(function(p){ return p.name === name; });
-    if(!match || (match.password||'') !== password){
+    try{
+      await signInWithEmailAndPassword(auth, nameToEmail(name), password);
+      $('login-status').textContent = '';
+      /* 이후 처리는 onAuthStateChanged에서 이어집니다 */
+    }catch(e){
       $('login-status').textContent = '캐릭터 이름 또는 비밀번호가 올바르지 않습니다.';
-      return;
     }
-    sessionPlayerId = match.id;
-    currentPlayer = match;
-    try{ localStorage.setItem(SESSION_KEY, match.id); }catch(e){}
-    $('login-status').textContent = '';
-    await enterFarm();
   });
 
-  $('btn-logout').addEventListener('click', function(){
-    sessionPlayerId = null;
+  $('btn-logout').addEventListener('click', async function(){
+    try{ await signOut(auth); }catch(e){}
     currentPlayer = null;
-    try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
     $('login-name').value = '';
     $('login-password').value = '';
     $('farm-view').style.display = 'none';
     $('login-view').style.display = 'block';
+  });
+
+  onAuthStateChanged(auth, async function(user){
+    if(!user){
+      currentPlayer = null;
+      $('farm-view').style.display = 'none';
+      $('login-view').style.display = 'block';
+      return;
+    }
+    currentPlayer = await getMyPlayerDoc(user.uid);
+    if(!currentPlayer){
+      $('login-status').textContent = '캐릭터 정보를 찾을 수 없습니다. 운영자에게 문의하세요.';
+      await signOut(auth);
+      return;
+    }
+    await enterFarm();
   });
 
   async function enterFarm(){
@@ -483,13 +479,6 @@ const db = getFirestore(firebaseApp);
   }
 
   /* ---------- init ---------- */
-
-  (async function init(){
-    const ok = await tryAutoLogin();
-    if(ok){
-      await enterFarm();
-    }
-  })();
 
 })();
 </script>

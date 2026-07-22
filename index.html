@@ -494,22 +494,33 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
-  getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc
+  getFirestore, doc, setDoc, getDoc, deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 /* ====== 여기에 Firebase 콘솔에서 복사한 firebaseConfig 값을 붙여넣으세요 ====== */
 const firebaseConfig = {
-  apiKey: "AIzaSyDWZZ6nRE4kMvH_2WrGq6U4BKF99ToAAWY",
-  authDomain: "project-4966668896523357297.firebaseapp.com",
-  projectId: "project-4966668896523357297",
-  storageBucket: "project-4966668896523357297.firebasestorage.app",
-  messagingSenderId: "70275867723",
-  appId: "1:70275867723:web:ffff595e30956c700199ce"
+  apiKey: "AIzaSyD9rJsF_Jbut0GiiuhEKQFczVqvgmWfLOc",
+  authDomain: "spindel-academy.firebaseapp.com",
+  projectId: "spindel-academy",
+  storageBucket: "spindel-academy.firebasestorage.app",
+  messagingSenderId: "824092881561",
+  appId: "1:824092881561:web:92c008333262ed237e3e08"
 };
 /* ============================================================ */
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
+const auth = getAuth(firebaseApp);
+setPersistence(auth, browserLocalPersistence).catch(function(e){ console.error(e); });
+
+/* 캐릭터 이름을 Firebase Auth용 가짜 이메일로 변환 (플레이어에게는 여전히 "이름"으로만 보임) */
+function nameToEmail(name){
+  const slug = name.trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_가-힣]/g,'');
+  return 'char_'+encodeURIComponent(slug)+'@spindelacademy.local';
+}
 
 (function(){
 
@@ -654,13 +665,11 @@ const db = getFirestore(firebaseApp);
       return true;
     }catch(e){ console.error('savePlayer 실패:', e); return false; }
   }
-  async function loadAllPlayers(){
+  async function getMyPlayerDoc(uid){
     try{
-      const snap = await getDocs(collection(db, 'players'));
-      const players = [];
-      snap.forEach(function(d){ players.push(d.data()); });
-      return players;
-    }catch(e){ console.error('loadAllPlayers 실패:', e); return []; }
+      const snap = await getDoc(doc(db, 'players', uid));
+      return snap.exists() ? snap.data() : null;
+    }catch(e){ console.error('getMyPlayerDoc 실패:', e); return null; }
   }
   async function deletePlayerFromStorage(id){
     try{ await deleteDoc(doc(db, 'players', id)); }catch(e){ console.error('deletePlayer 실패:', e); }
@@ -672,34 +681,60 @@ const db = getFirestore(firebaseApp);
       return true;
     }catch(e){ console.error('saveArtifact 실패:', e); return false; }
   }
-  async function loadAllArtifacts(){
+  async function getArtifactById(id){
     try{
-      const snap = await getDocs(collection(db, 'artifacts'));
-      const artifacts = [];
-      snap.forEach(function(d){ artifacts.push(d.data()); });
-      return artifacts;
-    }catch(e){ console.error('loadAllArtifacts 실패:', e); return []; }
+      const snap = await getDoc(doc(db, 'artifacts', id));
+      return snap.exists() ? snap.data() : null;
+    }catch(e){ console.error('getArtifactById 실패:', e); return null; }
   }
   async function deleteArtifactFromStorage(id){
     try{ await deleteDoc(doc(db, 'artifacts', id)); }catch(e){ console.error('deleteArtifact 실패:', e); }
   }
 
-  async function loadAllItemCatalog(){
+  async function getItemCatalogById(id){
     try{
-      const snap = await getDocs(collection(db, 'items'));
-      const items = [];
-      snap.forEach(function(d){ items.push(d.data()); });
-      return items;
-    }catch(e){ console.error('loadAllItemCatalog 실패:', e); return []; }
+      const snap = await getDoc(doc(db, 'items', id));
+      return snap.exists() ? snap.data() : null;
+    }catch(e){ console.error('getItemCatalogById 실패:', e); return null; }
   }
 
-  async function loadAllRecipes(){
+  /* 도감 전체를 훑어보는 게 아니라, 이 캐릭터가 "이미 가진" 항목의 도감 정보만 하나씩 가져와 캐싱한다.
+     아직 아무에게도 지급되지 않은 아티팩트/아이템은 이 방식으로는 절대 조회할 수 없다. */
+  async function prefetchCatalogFor(player){
+    const artifactIds = Array.from(new Set((player.inventory||[]).map(function(i){ return i.sourceArtifactId; }).filter(Boolean)));
+    const itemIds = Array.from(new Set((player.items||[]).map(function(i){ return i.sourceItemId; }).filter(Boolean)));
+    for(const id of artifactIds){
+      if(!artifactCatalogCache.find(function(a){ return a.id === id; })){
+        const data = await getArtifactById(id);
+        if(data) artifactCatalogCache.push(data);
+      }
+    }
+    for(const id of itemIds){
+      if(!itemCatalogCache.find(function(a){ return a.id === id; })){
+        const data = await getItemCatalogById(id);
+        if(data) itemCatalogCache.push(data);
+      }
+    }
+  }
+
+  /* ---------- 서버 함수 (Netlify Functions) 호출 ---------- */
+  /* admin.html과 같은 Netlify 사이트에 배포된 함수 주소로 바꿔주세요. */
+  const FUNCTIONS_BASE = 'https://spindelacademy-admin.netlify.app/.netlify/functions';
+
+  async function callServerFunction(name, payload){
+    if(!auth.currentUser) return { success:false, message:'로그인이 필요합니다.' };
+    const idToken = await auth.currentUser.getIdToken();
     try{
-      const snap = await getDocs(collection(db, 'recipes'));
-      const recipes = [];
-      snap.forEach(function(d){ recipes.push(d.data()); });
-      return recipes;
-    }catch(e){ console.error('loadAllRecipes 실패:', e); return []; }
+      const res = await fetch(FUNCTIONS_BASE+'/'+name, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(Object.assign({ idToken: idToken }, payload))
+      });
+      return await res.json();
+    }catch(e){
+      console.error('callServerFunction 실패:', e);
+      return { success:false, message:'서버에 연결할 수 없습니다.' };
+    }
   }
 
   async function logAction(playerName, action, details){
@@ -716,9 +751,7 @@ const db = getFirestore(firebaseApp);
   }
 
   let artifactCatalogCache = [];
-  let allPlayersCache = [];
   let itemCatalogCache = [];
-  let recipesCache = [];
 
   /* 인벤토리 아이템의 "실제 값"을 도감에서 실시간으로 가져온다. */
   function resolveItem(item){
@@ -742,8 +775,7 @@ const db = getFirestore(firebaseApp);
 
   /* ============ 플레이어 화면 (portal mode) ============ */
 
-  let sessionPlayerId = null;
-  const SESSION_KEY = 'trial_tower_portal_session';
+  let currentPlayerDoc = null;
 
   $('btn-login').addEventListener('click', async function(){
     const name = $('login-name').value.trim();
@@ -752,56 +784,47 @@ const db = getFirestore(firebaseApp);
       $('login-status').textContent = '캐릭터 이름과 비밀번호를 모두 입력하세요.';
       return;
     }
-    allPlayersCache = await loadAllPlayers();
-    const match = allPlayersCache.find(function(p){ return p.name === name; });
-    if(!match || (match.password||'') !== password){
+    try{
+      await signInWithEmailAndPassword(auth, nameToEmail(name), password);
+      $('login-status').textContent = '';
+      /* 이후 처리는 onAuthStateChanged에서 이어집니다 */
+    }catch(e){
       $('login-status').textContent = '캐릭터 이름 또는 비밀번호가 올바르지 않습니다.';
-      return;
     }
-    sessionPlayerId = match.id;
-    try{ localStorage.setItem(SESSION_KEY, match.id); }catch(e){}
-    artifactCatalogCache = await loadAllArtifacts();
-    itemCatalogCache = await loadAllItemCatalog();
-    recipesCache = await loadAllRecipes();
-    $('login-status').textContent = '';
-    $('login-view').style.display = 'none';
-    $('char-view').style.display = 'block';
-    renderPortalChar();
-    logAction(match.name, '로그인', {});
   });
 
-  $('btn-logout').addEventListener('click', function(){
-    const outgoingName = currentPortalPlayer() ? currentPortalPlayer().name : '';
-    sessionPlayerId = null;
-    try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+  $('btn-logout').addEventListener('click', async function(){
+    const outgoingName = currentPlayerDoc ? currentPlayerDoc.name : '';
+    if(outgoingName) await logAction(outgoingName, '로그아웃', {});
+    try{ await signOut(auth); }catch(e){}
     $('login-name').value = '';
     $('login-password').value = '';
     $('char-view').style.display = 'none';
     $('login-view').style.display = 'block';
-    if(outgoingName) logAction(outgoingName, '로그아웃', {});
   });
 
-  async function tryPortalAutoLogin(){
-    let savedId = null;
-    try{ savedId = localStorage.getItem(SESSION_KEY); }catch(e){}
-    if(!savedId) return;
-    allPlayersCache = await loadAllPlayers();
-    const match = allPlayersCache.find(function(p){ return p.id === savedId; });
-    if(!match){
-      try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+  onAuthStateChanged(auth, async function(user){
+    if(!user){
+      currentPlayerDoc = null;
+      $('char-view').style.display = 'none';
+      $('login-view').style.display = 'block';
       return;
     }
-    sessionPlayerId = match.id;
-    artifactCatalogCache = await loadAllArtifacts();
-    itemCatalogCache = await loadAllItemCatalog();
-    recipesCache = await loadAllRecipes();
+    currentPlayerDoc = await getMyPlayerDoc(user.uid);
+    if(!currentPlayerDoc){
+      $('login-status').textContent = '캐릭터 정보를 찾을 수 없습니다. 운영자에게 문의하세요.';
+      await signOut(auth);
+      return;
+    }
+    await prefetchCatalogFor(currentPlayerDoc);
     $('login-view').style.display = 'none';
     $('char-view').style.display = 'block';
     renderPortalChar();
-  }
+    logAction(currentPlayerDoc.name, '로그인', {});
+  });
 
   function currentPortalPlayer(){
-    return allPlayersCache.find(function(p){ return p.id === sessionPlayerId; });
+    return currentPlayerDoc;
   }
 
   let pendingPortraitDataUrl = null;
@@ -1094,61 +1117,27 @@ const db = getFirestore(firebaseApp);
       $('transfer-status').textContent = '양도할 아티팩트나 아이템을 끌어다 놓고, 받을 캐릭터 이름을 입력하세요.';
       return;
     }
-    allPlayersCache = await loadAllPlayers();
-    const freshSelf = allPlayersCache.find(function(x){ return x.id === p.id; });
-    const target = allPlayersCache.find(function(x){ return x.name === targetName; });
-    if(!freshSelf) return;
-    if(!freshSelf.items) freshSelf.items = [];
-    if(!target){
-      $('transfer-status').textContent = '"'+targetName+'" 이름의 캐릭터를 찾을 수 없습니다.';
-      return;
-    }
-    if(!target.items) target.items = [];
-    if(target.id === freshSelf.id){
-      $('transfer-status').textContent = '자기 자신에게는 양도할 수 없습니다.';
-      return;
-    }
 
     const artifactIds = stagedTransferEntries.filter(function(e){ return e.type==='artifact'; }).map(function(e){ return e.id; });
     const itemSourceIds = stagedTransferEntries.filter(function(e){ return e.type==='item'; }).map(function(e){ return e.id; });
 
-    const artifactsToMove = freshSelf.inventory.filter(function(i){ return artifactIds.indexOf(i.id) !== -1; });
-    const itemStacksToMove = freshSelf.items.filter(function(i){ return itemSourceIds.indexOf(i.sourceItemId) !== -1; });
-
-    if(artifactsToMove.length === 0 && itemStacksToMove.length === 0){
-      $('transfer-status').textContent = '이미 처리된 아티팩트/아이템입니다. 새로고침 후 다시 시도하세요.';
-      stagedTransferEntries = [];
-      renderPortalChar();
-      return;
-    }
-    if(target.inventory.length + artifactsToMove.length > INVENTORY_MAX){
-      $('transfer-status').textContent = target.name+'의 아티팩트 인벤토리 공간이 부족합니다. (남은 칸: '+(INVENTORY_MAX-target.inventory.length)+')';
-      return;
-    }
-
-    const labels = artifactsToMove.map(function(i){ const r = resolveItem(i); return r.name || ELEMENT_NAME[r.element]; })
-      .concat(itemStacksToMove.map(function(i){ const r = resolveGeneralItem(i); return (r.name || '아이템')+' x'+(i.quantity||1); }));
-
-    freshSelf.inventory = freshSelf.inventory.filter(function(i){ return artifactIds.indexOf(i.id) === -1; });
-    freshSelf.items = freshSelf.items.filter(function(i){ return itemSourceIds.indexOf(i.sourceItemId) === -1; });
-    target.inventory = target.inventory.concat(artifactsToMove);
-    itemStacksToMove.forEach(function(stack){
-      const existing = target.items.find(function(i){ return i.sourceItemId === stack.sourceItemId; });
-      if(existing){ existing.quantity = (existing.quantity||1) + (stack.quantity||1); }
-      else { target.items.push(stack); }
+    $('transfer-status').textContent = '처리 중...';
+    const result = await callServerFunction('transfer', {
+      targetName: targetName,
+      artifactIds: artifactIds,
+      itemSourceIds: itemSourceIds
     });
 
-    await savePlayer(freshSelf);
-    await savePlayer(target);
-    allPlayersCache = allPlayersCache.map(function(x){
-      if(x.id === freshSelf.id) return freshSelf;
-      if(x.id === target.id) return target;
-      return x;
-    });
+    if(!result.success){
+      $('transfer-status').textContent = result.message || '양도에 실패했습니다.';
+      return;
+    }
+
+    currentPlayerDoc = await getMyPlayerDoc(p.id);
     stagedTransferEntries = [];
     $('transfer-target-input').value = '';
-    $('transfer-status').textContent = labels.join(', ')+'을(를) '+target.name+'에게 양도했습니다.';
-    logAction(freshSelf.name, '양도', { to: target.name, items: labels });
+    $('transfer-status').textContent = (result.labels||[]).join(', ')+'을(를) '+result.toName+'에게 양도했습니다.';
+    logAction(p.name, '양도', { to: result.toName, items: result.labels });
     renderPortalChar();
   });
 
@@ -1201,46 +1190,22 @@ const db = getFirestore(firebaseApp);
       renderCraftSlotsDisplay();
       return;
     }
-    recipesCache = await loadAllRecipes();
-    const match = recipesCache.find(function(r){
-      return (r.itemAId===catA && r.itemBId===catB) || (r.itemAId===catB && r.itemBId===catA);
-    });
-    if(!match){
-      $('craft-status').textContent = '조합할 수 있는 레시피가 없습니다.';
+
+    $('craft-status').textContent = '조합 중...';
+    const result = await callServerFunction('craft', { itemAId: catA, itemBId: catB });
+
+    if(!result.success){
+      $('craft-status').textContent = result.message || '조합에 실패했습니다.';
       return;
     }
-    itemCatalogCache = await loadAllItemCatalog();
-    const resultCatalog = itemCatalogCache.find(function(x){ return x.id === match.resultItemId; });
-    if(!resultCatalog){
-      $('craft-status').textContent = '결과 아이템 정보를 찾을 수 없습니다.';
-      return;
-    }
-    // 재료 1개씩 소모
-    [catA, catB].forEach(function(sourceId){
-      const idx = p.items.findIndex(function(i){ return i.sourceItemId === sourceId; });
-      if(idx !== -1){
-        p.items[idx].quantity = (p.items[idx].quantity||1) - 1;
-        if(p.items[idx].quantity <= 0) p.items.splice(idx, 1);
-      }
-    });
-    // 결과물 1개 생성 (이미 있으면 수량 +1)
-    const existingResult = p.items.find(function(i){ return i.sourceItemId === resultCatalog.id; });
-    if(existingResult){
-      existingResult.quantity = (existingResult.quantity||1) + 1;
-    } else {
-      p.items.push({
-        sourceItemId: resultCatalog.id,
-        name: resultCatalog.name,
-        description: resultCatalog.description || '',
-        quantity: 1
-      });
-    }
-    await savePlayer(p);
+
+    currentPlayerDoc = await getMyPlayerDoc(p.id);
+    await prefetchCatalogFor(currentPlayerDoc);
     craftSlots = [null, null];
-    $('craft-status').textContent = '"'+resultCatalog.name+'"을(를) 조합했습니다!';
+    $('craft-status').textContent = '"'+result.resultName+'"을(를) 조합했습니다!';
     logAction(p.name, '조합', {
       materials: [resolveGeneralItem(item0).name || '아이템', resolveGeneralItem(item1).name || '아이템'],
-      result: resultCatalog.name
+      result: result.resultName
     });
     renderPortalChar();
   });
@@ -1268,7 +1233,6 @@ const db = getFirestore(firebaseApp);
   /* ---------- init ---------- */
 
   $('player-app').style.display = 'block';
-  tryPortalAutoLogin();
 
 })();
 </script>
